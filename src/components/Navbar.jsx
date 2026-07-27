@@ -1,16 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Sun, Moon } from "lucide-react";
+import { useLanguage } from "../utils/LanguageContext";
 
 const Navbar = () => {
+    const { language, setLanguage, t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [activeSection, setActiveSection] = useState("Home");
+    const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
+
+    useEffect(() => {
+        if (theme === "light") {
+            document.documentElement.classList.add("light-mode");
+            document.body.classList.add("light-mode");
+        } else {
+            document.documentElement.classList.remove("light-mode");
+            document.body.classList.remove("light-mode");
+        }
+        localStorage.setItem("theme", theme);
+    }, [theme]);
     
     const navItems = [
-        { href: "#Home", label: "Home" },
-        { href: "#About", label: "About" },
-        { href: "#Portofolio", label: "Portofolio" },
-        { href: "#Contact", label: "Contact" },
+        { href: "#Home", label: t("navHome") },
+        { href: "#About", label: t("navAbout") },
+        { href: "#Portofolio", label: t("navPortfolio") },
+        { href: "#Contact", label: t("navContact") },
     ];
 
     useEffect(() => {
@@ -84,7 +98,7 @@ const Navbar = () => {
                             onClick={(e) => scrollToSection(e, "#Home")}
                             className="text-xl font-bold bg-gradient-to-r from-[#a855f7] to-[#6366f1] bg-clip-text text-transparent"
                         >
-                            Ekizr
+                            ardev
                         </a>
                     </div>
         
@@ -116,11 +130,53 @@ const Navbar = () => {
                                     />
                                 </a>
                             ))}
+                            
+                            {/* Theme Toggle Button */}
+                            <button
+                                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                                className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-[#e2d3fd] hover:text-white flex items-center justify-center cursor-pointer"
+                                aria-label="Toggle Theme"
+                            >
+                                {theme === "dark" ? (
+                                    <Sun className="w-4 h-4 text-amber-400" />
+                                ) : (
+                                    <Moon className="w-4 h-4 text-[#a855f7]" />
+                                )}
+                            </button>
+
+                            {/* Language Toggle Button */}
+                            <button
+                                onClick={() => setLanguage(language === "id" ? "en" : "id")}
+                                className="px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-[#e2d3fd] hover:text-white flex items-center justify-center cursor-pointer text-xs font-bold uppercase min-w-[36px]"
+                                aria-label="Toggle Language"
+                            >
+                                {language}
+                            </button>
                         </div>
                     </div>
         
-                    {/* Mobile Menu Button */}
-                    <div className="md:hidden">
+                    {/* Mobile Controls */}
+                    <div className="md:hidden flex items-center gap-3">
+                        {/* Mobile Language Toggle */}
+                        <button
+                            onClick={() => setLanguage(language === "id" ? "en" : "id")}
+                            className="px-2 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-[#e2d3fd] hover:text-white flex items-center justify-center cursor-pointer text-xs font-bold uppercase min-w-[36px]"
+                            aria-label="Toggle Language"
+                        >
+                            {language}
+                        </button>
+
+                        <button
+                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-[#e2d3fd] hover:text-white flex items-center justify-center cursor-pointer"
+                            aria-label="Toggle Theme"
+                        >
+                            {theme === "dark" ? (
+                                <Sun className="w-4.5 h-4.5 text-amber-400" />
+                            ) : (
+                                <Moon className="w-4.5 h-4.5 text-[#a855f7]" />
+                            )}
+                        </button>
                         <button
                             onClick={() => setIsOpen(!isOpen)}
                             className={`relative p-2 text-[#e2d3fd] hover:text-white transition-transform duration-300 ease-in-out transform ${

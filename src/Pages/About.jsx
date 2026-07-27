@@ -2,9 +2,11 @@ import React, { useEffect, useState, memo, useMemo } from "react"
 import { FileText, Code, Award, Globe, ArrowUpRight, Sparkles, UserCheck } from "lucide-react"
 import AOS from 'aos'
 import 'aos/dist/aos.css'
+import { supabase } from '../supabase'
+import { useLanguage } from "../utils/LanguageContext"
 
 // Memoized Components
-const Header = memo(() => (
+const Header = memo(({ title, subtitle }) => (
   <div className="text-center lg:mb-8 mb-2 px-[5%]">
     <div className="inline-block relative group">
       <h2 
@@ -12,7 +14,7 @@ const Header = memo(() => (
         data-aos="zoom-in-up"
         data-aos-duration="600"
       >
-        About Me
+        {title}
       </h2>
     </div>
     <p 
@@ -21,13 +23,13 @@ const Header = memo(() => (
       data-aos-duration="800"
     >
       <Sparkles className="w-5 h-5 text-purple-400" />
-      Transforming ideas into digital experiences
+      {subtitle}
       <Sparkles className="w-5 h-5 text-purple-400" />
     </p>
   </div>
 ));
 
-const ProfileImage = memo(() => (
+const ProfileImage = memo(({ src }) => (
   <div className="flex justify-end items-center sm:p-12 sm:py-0 sm:pb-0 p-0 py-2 pb-2">
     <div 
       className="relative group" 
@@ -50,7 +52,7 @@ const ProfileImage = memo(() => (
           <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 via-transparent to-blue-500/20 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 hidden sm:block" />
           
           <img
-            src="/Photo.jpg"
+            src={src || "/ProfilePhoto.jpg"}
             alt="Profile"
             className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:rotate-2"
             loading="lazy"
@@ -113,12 +115,36 @@ const StatCard = memo(({ icon: Icon, color, value, label, description, animation
 ));
 
 const AboutPage = () => {
+  const { language, t } = useLanguage();
   // Memoized calculations
   const [stats, setStats] = useState({
     totalProjects: 0,
     totalCertificates: 0,
     YearExperience: 0,
   });
+  const [profileData, setProfileData] = useState(null);
+
+  // Fetch profile from Supabase
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data } = await supabase
+        .from('profile')
+        .select('*')
+        .eq('id', 1)
+        .single()
+      if (data) setProfileData(data)
+    }
+    fetchProfile()
+  }, [])
+
+  const profileName = profileData?.name || 'Aditya Ryan Wardana'
+  const descAbout = language === "en"
+    ? (profileData?.desc_about_en || profileData?.desc_about || 'I am an Informatics Engineering student focused on Full Stack development. I focus on creating engaging digital experiences and always strive to deliver the best solutions in every project I work on.')
+    : (profileData?.desc_about || 'Saya adalah mahasiswa Teknik Informatika yang berfokus pada pengembangan Full Stack. Saya berfokus pada penciptaan pengalaman digital yang menarik dan selalu berupaya memberikan solusi terbaik dalam setiap proyek yang saya kerjakan.')
+  const quote = language === "en"
+    ? (profileData?.quote_en || profileData?.quote || '"Leveraging AI as a professional tool, not a replacement."')
+    : (profileData?.quote || '"Leveraging AI as a professional tool, not a replacement."')
+  const photoUrl = profileData?.photo_url || null
 
   useEffect(() => {
     const updateStats = () => {
@@ -180,27 +206,27 @@ const AboutPage = () => {
       icon: Code,
       color: "from-[#6366f1] to-[#a855f7]",
       value: totalProjects,
-      label: "Total Projects",
-      description: "Innovative web solutions crafted",
+      label: t("statProjects"),
+      description: t("statProjectsDesc"),
       animation: "fade-right",
     },
     {
       icon: Award,
       color: "from-[#a855f7] to-[#6366f1]",
       value: totalCertificates,
-      label: "Certificates",
-      description: "Professional skills validated",
+      label: t("statCertificates"),
+      description: t("statCertificatesDesc"),
       animation: "fade-up",
     },
     {
       icon: Globe,
       color: "from-[#6366f1] to-[#a855f7]",
       value: YearExperience,
-      label: "Years of Experience",
-      description: "Continuous learning journey",
+      label: t("statExperience"),
+      description: t("statExperienceDesc"),
       animation: "fade-left",
     },
-  ], [totalProjects, totalCertificates, YearExperience]);
+  ], [totalProjects, totalCertificates, YearExperience, t]);
 
   return (
     <div
@@ -210,7 +236,7 @@ const AboutPage = () => {
   itemType="https://schema.org/Person"
 
     >
-      <Header />
+      <Header title={t("aboutHeader")} subtitle={t("aboutSubtitle")} />
 
       <div className="w-full mx-auto pt-8 sm:pt-12 relative">
         <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
@@ -221,7 +247,7 @@ const AboutPage = () => {
               data-aos-duration="1000"
             >
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366f1] to-[#a855f7]">
-                Hello, I'm
+                {t("aboutHello")}
               </span>
               <span 
                 className="block mt-2 text-gray-200"
@@ -229,7 +255,7 @@ const AboutPage = () => {
                 data-aos-duration="1300"
                 itemProp="name"
               >
-                Eki Zulfar Rachman
+                {profileName}
               </span>
             </h2>
             
@@ -238,9 +264,8 @@ const AboutPage = () => {
               data-aos="fade-right"
               data-aos-duration="1500"
             >
-        Saya adalah mahasiswa Teknik Informatika yang berfokus pada pengembangan Front-End. 
-Saya berfokus pada penciptaan pengalaman digital yang menarik dan selalu berupaya memberikan solusi terbaik dalam setiap proyek yang saya kerjakan.
-                  </p>
+              {descAbout}
+            </p>
 
                {/* Quote Section */}
       <div 
@@ -260,18 +285,18 @@ Saya berfokus pada penciptaan pengalaman digital yang menarik dan selalu berupay
         </div>
         
         <blockquote className="text-gray-300 text-center lg:text-left italic font-medium text-sm relative z-10 pl-6">
-          "Leveraging AI as a professional tool, not a replacement."
+          {quote}
         </blockquote>
       </div>
 
             <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 lg:gap-4 lg:px-0 w-full">
-              <a href="https://drive.google.com/drive/folders/1BOm51Grsabb3zj6Xk27K-iRwI1zITcpo" className="w-full lg:w-auto">
+              <a href="https://drive.google.com/file/d/1PSw7l7S0DNUy3ii7x6G23a1XeAmt4J9C/view?usp=sharing" className="w-full lg:w-auto" target="_blank" rel="noopener noreferrer">
               <button 
                 data-aos="fade-up"
                 data-aos-duration="800"
                 className="w-full lg:w-auto sm:px-6 py-2 sm:py-3 rounded-lg bg-gradient-to-r from-[#6366f1] to-[#a855f7] text-white font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center lg:justify-start gap-2 shadow-lg hover:shadow-xl "
               >
-                <FileText className="w-4 h-4 sm:w-5 sm:h-5" /> Download CV
+                <FileText className="w-4 h-4 sm:w-5 sm:h-5" /> {t("btnDownloadCV")}
               </button>
               </a>
               <a href="#Portofolio" className="w-full lg:w-auto">
@@ -280,13 +305,13 @@ Saya berfokus pada penciptaan pengalaman digital yang menarik dan selalu berupay
                 data-aos-duration="1000"
                 className="w-full lg:w-auto sm:px-6 py-2 sm:py-3 rounded-lg border border-[#a855f7]/50 text-[#a855f7] font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center lg:justify-start gap-2 hover:bg-[#a855f7]/10 "
               >
-                <Code className="w-4 h-4 sm:w-5 sm:h-5" /> View Projects
+                <Code className="w-4 h-4 sm:w-5 sm:h-5" /> {t("btnViewProjects")}
               </button>
               </a>
             </div>
           </div>
 
-          <ProfileImage />
+          <ProfileImage src={photoUrl} />
         </div>
 
         <a href="#Portofolio">

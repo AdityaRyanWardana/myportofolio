@@ -26,3 +26,7 @@ dist/
 *.sln
 *.sw?
 *.env
+
+# Temp scripts
+generate_en_desc.cjs
+generate_en_desc.mjs

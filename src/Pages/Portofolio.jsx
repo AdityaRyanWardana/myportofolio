@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 
 import { supabase } from "../supabase"; 
+import { useLanguage } from "../utils/LanguageContext"; 
 
 import PropTypes from "prop-types";
 import SwipeableViews from "react-swipeable-views";
@@ -18,7 +19,7 @@ import Certificate from "../components/Certificate";
 import { Code, Award, Boxes } from "lucide-react";
 
 
-const ToggleButton = ({ onClick, isShowingMore }) => (
+const ToggleButton = ({ onClick, isShowingMore, text }) => (
   <button
     onClick={onClick}
     className="
@@ -46,7 +47,7 @@ const ToggleButton = ({ onClick, isShowingMore }) => (
     "
   >
     <span className="relative z-10 flex items-center gap-2">
-      {isShowingMore ? "See Less" : "See More"}
+      {text}
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="16"
@@ -102,27 +103,86 @@ function a11yProps(index) {
   };
 }
 
-// techStacks tetap sama
-const techStacks = [
-  { icon: "html.svg", language: "HTML" },
-  { icon: "css.svg", language: "CSS" },
+// Helper to map tech name to icon URL
+const getTechIcon = (language) => {
+  const normalized = language.toLowerCase().trim();
+  const localMap = {
+    "laravel": "laravel.svg",
+    "php": "php.svg",
+    "c++": "cpp.svg",
+    "cpp": "cpp.svg",
+    "arduino": "arduino.svg",
+    "mysql": "mysql.svg",
+    "reactjs": "reactjs.svg",
+    "react": "reactjs.svg",
+    "javascript": "javascript.svg",
+    "js": "javascript.svg",
+    "tailwind css": "tailwind.svg",
+    "tailwindcss": "tailwind.svg",
+    "tailwind": "tailwind.svg",
+    "vite": "vite.svg",
+    "node js": "nodejs.svg",
+    "nodejs": "nodejs.svg",
+    "node": "nodejs.svg",
+    "bootstrap": "bootstrap.svg",
+    "html": "html.svg",
+    "css": "css.svg",
+    "firebase": "firebase.svg",
+  };
+
+  if (localMap[normalized]) {
+    return localMap[normalized];
+  }
+
+  // Common Devicon fallbacks
+  const deviconMap = {
+    "git": "git",
+    "github": "github",
+    "python": "python",
+    "java": "java",
+    "supabase": "supabase",
+    "postgresql": "postgresql",
+    "mongodb": "mongodb",
+    "firebase": "firebase",
+    "vue": "vuejs",
+    "vuejs": "vuejs",
+    "next.js": "nextjs",
+    "nextjs": "nextjs",
+    "docker": "docker",
+    "typescript": "typescript",
+    "figma": "figma",
+  };
+
+  const deviconKey = deviconMap[normalized];
+  if (deviconKey) {
+    return `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${deviconKey}/${deviconKey}-original.svg`;
+  }
+
+  return "html.svg";
+};
+
+const DEFAULT_TECH_STACKS = [
+  { icon: "laravel.svg", language: "Laravel" },
+  { icon: "php.svg", language: "PHP" },
+  { icon: "cpp.svg", language: "C++" },
+  { icon: "arduino.svg", language: "Arduino" },
+  { icon: "mysql.svg", language: "MySQL" },
+  { icon: "reactjs.svg", language: "ReactJS" },
   { icon: "javascript.svg", language: "JavaScript" },
   { icon: "tailwind.svg", language: "Tailwind CSS" },
-  { icon: "reactjs.svg", language: "ReactJS" },
   { icon: "vite.svg", language: "Vite" },
   { icon: "nodejs.svg", language: "Node JS" },
   { icon: "bootstrap.svg", language: "Bootstrap" },
-  { icon: "firebase.svg", language: "Firebase" },
-  { icon: "MUI.svg", language: "Material UI" },
-  { icon: "vercel.svg", language: "Vercel" },
-  { icon: "SweetAlert.svg", language: "SweetAlert2" },
+  { icon: "html.svg", language: "HTML" },
 ];
 
 export default function FullWidthTabs() {
+  const { language, t } = useLanguage();
   const theme = useTheme();
   const [value, setValue] = useState(0);
   const [projects, setProjects] = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [techStacks, setTechStacks] = useState(DEFAULT_TECH_STACKS);
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showAllCertificates, setShowAllCertificates] = useState(false);
   const isMobile = window.innerWidth < 768;
@@ -134,13 +194,13 @@ export default function FullWidthTabs() {
     });
   }, []);
 
-
   const fetchData = useCallback(async () => {
     try {
       // Mengambil data dari Supabase secara paralel
-      const [projectsResponse, certificatesResponse] = await Promise.all([
+      const [projectsResponse, certificatesResponse, profileResponse] = await Promise.all([
         supabase.from("projects").select("*").order('id', { ascending: false }),
         supabase.from("certificates").select("*").order('id', { ascending: false }), 
+        supabase.from("profile").select("tech_stack").eq("id", 1).single(),
       ]);
 
       // Error handling untuk setiap request
@@ -150,9 +210,19 @@ export default function FullWidthTabs() {
       // Supabase mengembalikan data dalam properti 'data'
       const projectData = projectsResponse.data || [];
       const certificateData = certificatesResponse.data || [];
+      const profileData = profileResponse.data || {};
 
       setProjects(projectData);
       setCertificates(certificateData);
+
+      if (profileData && Array.isArray(profileData.tech_stack)) {
+        const mappedTech = profileData.tech_stack.map(techName => ({
+          icon: getTechIcon(techName),
+          language: techName
+        }));
+        setTechStacks(mappedTech.length > 0 ? mappedTech : DEFAULT_TECH_STACKS);
+        localStorage.setItem("tech_stacks", JSON.stringify(mappedTech));
+      }
 
       // Store in localStorage (fungsionalitas ini tetap dipertahankan)
       localStorage.setItem("projects", JSON.stringify(projectData));
@@ -165,16 +235,18 @@ export default function FullWidthTabs() {
     }
   }, []);
 
-
-
   useEffect(() => {
-    // Coba ambil dari localStorage dulu untuk laod lebih cepat
+    // Coba ambil dari localStorage dulu untuk load lebih cepat
     const cachedProjects = localStorage.getItem('projects');
     const cachedCertificates = localStorage.getItem('certificates');
+    const cachedTechStacks = localStorage.getItem('tech_stacks');
 
     if (cachedProjects && cachedCertificates) {
         setProjects(JSON.parse(cachedProjects));
         setCertificates(JSON.parse(cachedCertificates));
+    }
+    if (cachedTechStacks) {
+        setTechStacks(JSON.parse(cachedTechStacks));
     }
     
     fetchData(); // Tetap panggil fetchData untuk sinkronisasi data terbaru
@@ -195,7 +267,6 @@ export default function FullWidthTabs() {
   const displayedProjects = showAllProjects ? projects : projects.slice(0, initialItems);
   const displayedCertificates = showAllCertificates ? certificates : certificates.slice(0, initialItems);
 
-  // Sisa dari komponen (return statement) tidak ada perubahan
   return (
     <div className="md:px-[10%] px-[5%] w-full sm:mt-0 mt-[3rem] bg-[#030014] overflow-hidden" id="Portofolio">
       {/* Header section - unchanged */}
@@ -208,12 +279,11 @@ export default function FullWidthTabs() {
             backgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
-            Portfolio Showcase
+            {t("portfolioHeader")}
           </span>
         </h2>
         <p className="text-slate-400 max-w-2xl mx-auto text-sm md:text-base mt-2">
-          Explore my journey through projects, certifications, and technical expertise. 
-          Each section represents a milestone in my continuous learning path.
+          {t("portfolioSubtitle")}
         </p>
       </div>
 
@@ -288,17 +358,17 @@ export default function FullWidthTabs() {
           >
             <Tab
               icon={<Code className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Projects"
+              label={t("tabProjects")}
               {...a11yProps(0)}
             />
             <Tab
               icon={<Award className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Certificates"
+              label={t("tabCertificates")}
               {...a11yProps(1)}
             />
             <Tab
               icon={<Boxes className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Tech Stack"
+              label={t("tabTech")}
               {...a11yProps(2)}
             />
           </Tabs>
@@ -321,7 +391,7 @@ export default function FullWidthTabs() {
                     <CardProject
                       Img={project.Img}
                       Title={project.Title}
-                      Description={project.Description}
+                      Description={language === "en" ? (project.Description_EN || project.description_en || project.Description) : project.Description}
                       Link={project.Link}
                       id={project.id}
                     />
@@ -334,6 +404,7 @@ export default function FullWidthTabs() {
                 <ToggleButton
                   onClick={() => toggleShowMore('projects')}
                   isShowingMore={showAllProjects}
+                  text={showAllProjects ? t("btnSeeLess") : t("btnSeeMore")}
                 />
               </div>
             )}
@@ -358,6 +429,7 @@ export default function FullWidthTabs() {
                 <ToggleButton
                   onClick={() => toggleShowMore('certificates')}
                   isShowingMore={showAllCertificates}
+                  text={showAllCertificates ? t("btnSeeLess") : t("btnSeeMore")}
                 />
               </div>
             )}

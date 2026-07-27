@@ -3,35 +3,37 @@ import { Helmet } from "react-helmet-async"
 import { Github, Linkedin, Mail, ExternalLink, Instagram, Sparkles } from "lucide-react"
 import AOS from 'aos'
 import 'aos/dist/aos.css'
+import { supabase } from '../supabase'
+import { useLanguage } from "../utils/LanguageContext"
 
-const StatusBadge = memo(() => (
+const StatusBadge = memo(({ text }) => (
   <div className="inline-block animate-float lg:mx-0" data-aos="zoom-in" data-aos-delay="400">
     <div className="relative group">
       <div className="absolute -inset-0.5 bg-gradient-to-r from-[#6366f1] to-[#a855f7] rounded-full blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
       <div className="relative px-3 sm:px-4 py-2 rounded-full bg-black/40 backdrop-blur-xl border border-white/10">
         <span className="bg-gradient-to-r from-[#6366f1] to-[#a855f7] text-transparent bg-clip-text sm:text-sm text-[0.7rem] font-medium flex items-center">
           <Sparkles className="sm:w-4 sm:h-4 w-3 h-3 mr-2 text-blue-400" />
-          Ready to Innovate
+          {text}
         </span>
       </div>
     </div>
   </div>
 ));
 
-const MainTitle = memo(() => (
+const MainTitle = memo(({ line1, line2 }) => (
   <div className="space-y-2" data-aos="fade-up" data-aos-delay="600">
     <h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-6xl xl:text-7xl font-bold tracking-tight">
       <span className="relative inline-block">
         <span className="absolute -inset-2 bg-gradient-to-r from-[#6366f1] to-[#a855f7] blur-2xl opacity-20"></span>
         <span className="relative bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent">
-          Frontend
+          {line1}
         </span>
       </span>
       <br />
       <span className="relative inline-block mt-2">
         <span className="absolute -inset-2 bg-gradient-to-r from-[#6366f1] to-[#a855f7] blur-2xl opacity-20"></span>
         <span className="relative bg-gradient-to-r from-[#6366f1] to-[#a855f7] bg-clip-text text-transparent">
-          Developer
+          {line2}
         </span>
       </span>
     </h1>
@@ -76,21 +78,46 @@ const SocialLink = memo(({ icon: Icon, link, label }) => (
 const TYPING_SPEED = 100;
 const ERASING_SPEED = 50;
 const PAUSE_DURATION = 2000;
-const WORDS = ["Network & Telecom Student", "Tech Enthusiast"];
-const TECH_STACK = ["React", "Javascript", "Node.js", "Tailwind"];
+const DEFAULT_TECH_STACK = ["Laravel", "PHP", "C++", "React", "JavaScript", "Tailwind CSS", "MySQL"];
+const DEFAULT_DESC_ID = "Lulusan teknik komputer dan jaringan dan melanjutkan studinya di Politeknik Negeri Batam jurusan informatika, juga menjabat sebagai Kepala Divisi Komunikasi dan Informasi di Millennial Kota Batam.";
+const DEFAULT_DESC_EN = "Graduate of computer and network engineering and continued his studies at Batam Polytechnic majoring in informatics, also head of the Communication and Information Division at Millennial Batam City.";
 const SOCIAL_LINKS = [
-  { icon: Github, link: "https://github.com/EkiZR", label: "GitHub Profile" },
-  { icon: Linkedin, link: "https://www.linkedin.com/in/ekizr/", label: "LinkedIn Profile" },
-  { icon: Instagram, link: "https://www.instagram.com/ekizr_/?hl=id", label: "Instagram Profile" }
+  { icon: Github, link: "https://github.com/AdityaRyanWardana", label: "GitHub Profile" },
+  { icon: Linkedin, link: "https://www.linkedin.com/in/aditya-ryan-wardana-a0b065348", label: "LinkedIn Profile" },
+  { icon: Instagram, link: "https://www.instagram.com/wrddnaa_/?hl=en", label: "Instagram Profile" }
 ];
 
 const Home = () => {
+  const { language, t } = useLanguage()
   const [text, setText] = useState("")
   const [isTyping, setIsTyping] = useState(true)
   const [wordIndex, setWordIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
+  const [profileData, setProfileData] = useState(null)
+
+  const WORDS = t("typingWords")
+
+  // Fetch profile from Supabase
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data } = await supabase
+        .from('profile')
+        .select('*')
+        .eq('id', 1)
+        .single()
+      if (data) setProfileData(data)
+    }
+    fetchProfile()
+  }, [])
+
+  const techStack = profileData?.tech_stack?.length ? profileData.tech_stack : DEFAULT_TECH_STACK
+  const description = language === "en"
+    ? (profileData?.desc_home_en || profileData?.desc_home || DEFAULT_DESC_EN)
+    : (profileData?.desc_home || DEFAULT_DESC_ID)
+  const titleLine1 = profileData?.title_line1 || 'Full Stack'
+  const titleLine2 = profileData?.title_line2 || 'Developer'
 
   useEffect(() => {
     const initAOS = () => {
@@ -140,25 +167,25 @@ const Home = () => {
   return (
     <>
       <Helmet>
-        <title>Eki Zulfar Rachman — Frontend Web Developer</title>
-        <meta name="description" content="Website resmi Eki Zulfar Rachman, Front-End Web Developer. Saya berfokus pada penciptaan pengalaman digital yang menarik dan selalu berupaya memberikan solusi terbaik dalam setiap proyek yang saya kerjakan." />
+        <title>Aditya Ryan Wardana — Full Stack Web Developer</title>
+        <meta name="description" content="Website resmi Aditya Ryan Wardana, Full Stack Web Developer. Saya berfokus pada penciptaan pengalaman digital yang menarik dan selalu berupaya memberikan solusi terbaik dalam setiap proyek yang saya kerjakan." />
      <meta name="robots" content="index, follow" />
-        <link rel="canonical" href="https://ekizr.com" />
-        <meta property="og:title" content="Eki Zulfar Rachman — Frontend Web Developer" />
-     <meta property="og:description" content="Website resmi dan portofolio Eki Zulfar Rachman, Front-End Web Developer." />
-        <meta property="og:url" content="https://ekizr.com" />
+        <link rel="canonical" href="https://adityaryan.com" />
+        <meta property="og:title" content="Aditya Ryan Wardana — Full Stack Web Developer" />
+     <meta property="og:description" content="Website resmi dan portofolio Aditya Ryan Wardana, Full Stack Web Developer." />
+        <meta property="og:url" content="https://adityaryan.com" />
         <meta property="og:type" content="website" />
         <script type="application/ld+json">{`
           {
             "@context": "https://schema.org",
             "@type": "Person",
-            "name": "Eki Zulfar Rachman",
-            "jobTitle": "Frontend Developer",
-            "url": "https://ekizr.com",
+            "name": "Aditya Ryan Wardana",
+            "jobTitle": "Full Stack Developer",
+            "url": "https://adityaryan.com",
             "sameAs": [
-              "https://github.com/EkiZR",
-              "https://www.linkedin.com/in/ekizr/",
-              "https://www.instagram.com/ekizr_/"
+              "https://github.com/AdityaRyanWardana",
+              "https://www.linkedin.com/in/aditya-ryan-wardana-a0b065348",
+              "https://www.instagram.com/wrddnaa_/"
             ]
           }
         `}</script>
@@ -173,8 +200,8 @@ const Home = () => {
                 data-aos="fade-right"
                 data-aos-delay="200">
                 <div className="space-y-4 sm:space-y-6">
-                  <StatusBadge />
-                  <MainTitle />
+                  <StatusBadge text={t("statusBadge")} />
+                  <MainTitle line1={titleLine1} line2={titleLine2} />
 
                   {/* Typing Effect */}
                   <div className="h-8 flex items-center" data-aos="fade-up" data-aos-delay="800">
@@ -188,20 +215,20 @@ const Home = () => {
                   <p className="text-base md:text-lg text-gray-400 max-w-xl leading-relaxed font-light"
                     data-aos="fade-up"
                     data-aos-delay="1000">
-                    Menciptakan Website Yang Inovatif, Fungsional, dan User-Friendly untuk Solusi Digital.
+                    {description}
                   </p>
 
                   {/* Tech Stack */}
                   <div className="flex flex-wrap gap-3 justify-start" data-aos="fade-up" data-aos-delay="1200">
-                    {TECH_STACK.map((tech, index) => (
+                    {techStack.map((tech, index) => (
                       <TechStack key={index} tech={tech} />
                     ))}
                   </div>
 
                   {/* CTA Buttons */}
                   <div className="flex flex-row gap-3 w-full justify-start" data-aos="fade-up" data-aos-delay="1400">
-                    <CTAButton href="#Portofolio" text="Projects" icon={ExternalLink} />
-                    <CTAButton href="#Contact" text="Contact" icon={Mail} />
+                    <CTAButton href="#Portofolio" text={t("btnProjects")} icon={ExternalLink} />
+                    <CTAButton href="#Contact" text={t("btnContact")} icon={Mail} />
                   </div>
 
                   {/* Social Links */}

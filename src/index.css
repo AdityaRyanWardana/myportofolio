@@ -185,3 +185,168 @@ body {
 	user-select: none;
 	cursor: default;
   } */
+
+/* ─── Light Mode Overrides ──────────────────────────────────── */
+html.light-mode,
+body.light-mode {
+  background: #f8fafc !important;
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Backgrounds */
+.light-mode .bg-\[\#030014\] {
+  background-color: #f8fafc !important;
+}
+.light-mode .bg-\[\#0a0a1a\] {
+  background-color: #f1f5f9 !important;
+}
+.light-mode .bg-\[\#0d0d22\] {
+  background-color: #e2e8f0 !important;
+}
+.light-mode .bg-white\/5 {
+  background-color: rgba(15, 23, 42, 0.04) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+.light-mode .bg-white\/10 {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+.light-mode .bg-black\/40 {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+.light-mode .bg-black\/50 {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+.light-mode .bg-gray-900\/50 {
+  background-color: rgba(255, 255, 255, 0.7) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+.light-mode .bg-slate-800\/50 {
+  background-color: rgba(15, 23, 42, 0.05) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+.light-mode .bg-\[\#070420\] {
+  background-color: #f8fafc !important;
+}
+.light-mode .bg-\[\#110c35\] {
+  background-color: #f1f5f9 !important;
+}
+.light-mode .bg-white\/4 {
+  background-color: rgba(15, 23, 42, 0.03) !important;
+}
+
+/* Scrollbar overrides */
+.light-mode ::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.8) !important;
+  border: 1px solid rgba(15, 23, 42, 0.05) !important;
+}
+.light-mode ::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.25) !important;
+  border: 1px solid rgba(15, 23, 42, 0.05) !important;
+  box-shadow: none !important;
+}
+.light-mode ::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.4) !important;
+}
+
+/* Text Colors */
+.light-mode .text-white {
+  color: #0f172a !important;
+}
+.light-mode .text-gray-100 {
+  color: #1e293b !important;
+}
+.light-mode .text-gray-200 {
+  color: #1e293b !important;
+}
+.light-mode .text-gray-300 {
+  color: #334155 !important;
+}
+.light-mode .text-gray-400 {
+  color: #475569 !important;
+}
+.light-mode .text-slate-300 {
+  color: #334155 !important;
+}
+.light-mode .text-slate-400 {
+  color: #475569 !important;
+}
+.light-mode .text-\[\#e2d3fd\] {
+  color: #4f46e5 !important;
+}
+.light-mode .text-gray-500 {
+  color: #64748b !important;
+}
+
+/* Floating Blobs Opacity */
+.light-mode .bg-purple-500,
+.light-mode .bg-cyan-500,
+.light-mode .bg-blue-500 {
+  opacity: 0.1 !important;
+}
+
+/* Gradient Fixes */
+.light-mode .from-white {
+  --tw-gradient-from: #1e293b !important;
+  --tw-gradient-to: rgba(30, 41, 59, 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.light-mode .via-blue-100 {
+  --tw-gradient-stops: var(--tw-gradient-from), #334155 !important, var(--tw-gradient-to) !important;
+}
+.light-mode .to-purple-200 {
+  --tw-gradient-to: #0f172a !important;
+}
+
+/* Borders */
+.light-mode .border-white\/10,
+.light-mode .border-white\/12,
+.light-mode .border-white\/15,
+.light-mode .border-white\/20,
+.light-mode .border-white\/8 {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Glassmorphism Overrides */
+.light-mode .backdrop-blur-xl,
+.light-mode .backdrop-blur-lg,
+.light-mode .backdrop-blur-md {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Navbar styling overrides */
+.light-mode nav {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05) !important;
+}
+.light-mode nav.bg-transparent {
+  background-color: transparent !important;
+  border-bottom-color: transparent !important;
+}
+
+/* Input text focus */
+.light-mode input, 
+.light-mode textarea {
+  color: #0f172a !important;
+  background-color: rgba(15, 23, 42, 0.04) !important;
+}
+.light-mode input::placeholder, 
+.light-mode textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Tab indicator & text */
+.light-mode .MuiTab-root {
+  color: #475569 !important;
+}
+.light-mode .MuiTab-root.Mui-selected {
+  color: #4f46e5 !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(59, 130, 246, 0.1)) !important;
+}
+.light-mode .MuiTab-root:hover {
+  color: #0f172a !important;
+  background-color: rgba(99, 102, 241, 0.05) !important;
+}

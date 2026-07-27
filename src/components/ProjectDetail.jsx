@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useParams, useNavigate } from "react-router-dom";
+import { useLanguage } from "../utils/LanguageContext";
 import {
   ArrowLeft,
   ExternalLink,
@@ -119,6 +120,7 @@ const handleGithubClick = (githubLink) => {
 };
 
 const ProjectDetails = () => {
+  const { language } = useLanguage();
   const { slug } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
@@ -137,7 +139,7 @@ const ProjectDetails = () => {
         ...selectedProject,
         Features: selectedProject.Features || [],
         TechStack: selectedProject.TechStack || [],
-        Github: selectedProject.Github || "https://github.com/EkiZR",
+        Github: selectedProject.Github || "https://github.com/AdityaRyanWardana",
       };
       setProject(enhancedProject);
     }
@@ -156,29 +158,30 @@ const ProjectDetails = () => {
     );
   }
 
-  const projectUrl = `https://ekizr.com/project/${toSlug(project.Title)}`;
+  const projectDescription = language === "en" ? (project.Description_EN || project.description_en || project.Description) : project.Description;
+  const projectUrl = `https://adityaryan.com/project/${toSlug(project.Title)}`;
 
   return (
     <>
       <Helmet>
-        <title>{project.Title} — Eki Zulfar Rachman</title>
+        <title>{project.Title} — Aditya Ryan Wardana</title>
         <meta
           name="description"
           content={
-            project.Description
-              ? project.Description.slice(0, 155)
-              : `Project ${project.Title} oleh Eki Zulfar Rachman — Frontend Web Developer.`
+            projectDescription
+              ? projectDescription.slice(0, 155)
+              : `Project ${project.Title} oleh Aditya Ryan Wardana — Full Stack Web Developer.`
           }
         />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href={projectUrl} />
         <meta
           property="og:title"
-          content={`${project.Title} — Eki Zulfar Rachman`}
+          content={`${project.Title} — Aditya Ryan Wardana`}
         />
         <meta
           property="og:description"
-          content={project.Description?.slice(0, 155)}
+          content={projectDescription?.slice(0, 155)}
         />
         <meta property="og:url" content={projectUrl} />
         <meta property="og:type" content="website" />
@@ -188,12 +191,12 @@ const ProjectDetails = () => {
             "@context": "https://schema.org",
             "@type": "CreativeWork",
             "name": "${project.Title}",
-            "description": "${project.Description?.replace(/"/g, '\\"')}",
+            "description": "${projectDescription?.replace(/"/g, '\\"')}",
             "url": "${projectUrl}",
             "author": {
               "@type": "Person",
-              "name": "Eki Zulfar Rachman",
-              "url": "https://ekizr.com"
+              "name": "Aditya Ryan Wardana",
+              "url": "https://adityaryan.com"
             }
           }
         `}</script>
@@ -240,7 +243,7 @@ const ProjectDetails = () => {
 
                 <div className="prose prose-invert max-w-none">
                   <p className="text-base md:text-lg text-gray-300/90 leading-relaxed">
-                    {project.Description}
+                    {projectDescription}
                   </p>
                 </div>
 

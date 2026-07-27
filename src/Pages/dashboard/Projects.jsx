@@ -193,6 +193,7 @@ const ProjectForm = ({
   const [form, setForm] = useState({
     Title: initial?.Title || "",
     Description: initial?.Description || "",
+    Description_EN: initial?.Description_EN || initial?.description_en || "",
     TechStack: Array.isArray(initial?.TechStack)
       ? initial.TechStack.join(", ")
       : initial?.TechStack || "",
@@ -233,17 +234,32 @@ const ProjectForm = ({
           />
         </div>
 
-        <div className="sm:col-span-2 space-y-1.5">
-          <label className="text-xs text-indigo-300/70 uppercase tracking-wider font-medium">
-            Description
-          </label>
-          <textarea
-            value={form.Description}
-            onChange={set("Description")}
-            placeholder="Describe what this project does, its purpose, and impact..."
-            rows={3}
-            className="w-full bg-[#0d0d22] border border-white/10 rounded-xl px-4 py-2.5 text-gray-200 placeholder-gray-600 text-sm outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none"
-          />
+        <div className="sm:col-span-2 space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs text-indigo-300/70 uppercase tracking-wider font-medium">
+              Description (ID)
+            </label>
+            <textarea
+              value={form.Description}
+              onChange={set("Description")}
+              placeholder="Describe what this project does in Indonesian..."
+              rows={3}
+              className="w-full bg-[#0d0d22] border border-white/10 rounded-xl px-4 py-2.5 text-gray-200 placeholder-gray-600 text-sm outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs text-indigo-300/70 uppercase tracking-wider font-medium">
+              Description (EN)
+            </label>
+            <textarea
+              value={form.Description_EN}
+              onChange={set("Description_EN")}
+              placeholder="Describe what this project does in English..."
+              rows={3}
+              className="w-full bg-[#0d0d22] border border-white/10 rounded-xl px-4 py-2.5 text-gray-200 placeholder-gray-600 text-sm outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none"
+            />
+          </div>
         </div>
 
         <InputField
@@ -368,6 +384,7 @@ export default function Projects() {
     await supabase.from("projects").insert({
       Title: form.Title,
       Description: form.Description,
+      Description_EN: form.Description_EN,
       Img: imgUrl,
       TechStack: form.TechStack.split(",")
         .map((s) => s.trim())
@@ -392,6 +409,7 @@ export default function Projects() {
       .update({
         Title: form.Title,
         Description: form.Description,
+        Description_EN: form.Description_EN,
         Img: imgUrl,
         TechStack: form.TechStack.split(",")
           .map((s) => s.trim())
