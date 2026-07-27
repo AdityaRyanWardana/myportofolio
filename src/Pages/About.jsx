@@ -132,7 +132,10 @@ const AboutPage = () => {
         .select('*')
         .eq('id', 1)
         .single()
-      if (data) setProfileData(data)
+      if (data) {
+        console.log("Supabase Profile Data:", data);
+        setProfileData(data);
+      }
     }
     fetchProfile()
   }, [])
