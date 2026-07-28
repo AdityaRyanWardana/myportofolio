@@ -265,23 +265,23 @@ const Komentar = () => {
         fetchPinnedComment();
     }, []);
 
+    const fetchComments = useCallback(async () => {
+        const { data, error } = await supabase
+            .from('portfolio_comments')
+            .select('*')
+            .eq('is_pinned', false)
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            console.error('Error fetching comments:', error);
+            return;
+        }
+        
+        setComments(data || []);
+    }, []);
+
     // Fetch regular comments (excluding pinned) and set up real-time subscription
     useEffect(() => {
-        const fetchComments = async () => {
-            const { data, error } = await supabase
-                .from('portfolio_comments')
-                .select('*')
-                .eq('is_pinned', false)
-                .order('created_at', { ascending: false });
-            
-            if (error) {
-                console.error('Error fetching comments:', error);
-                return;
-            }
-            
-            setComments(data || []);
-        };
-
         fetchComments();
 
         // Set up real-time subscription
@@ -303,7 +303,7 @@ const Komentar = () => {
         return () => {
             subscription.unsubscribe();
         };
-    }, []);
+    }, [fetchComments]);
 
     const uploadImage = useCallback(async (imageFile) => {
         if (!imageFile) return null;
@@ -349,13 +349,16 @@ const Komentar = () => {
             if (error) {
                 throw error;
             }
+
+            // Immediately update the comments list in UI without waiting for websocket
+            await fetchComments();
         } catch (error) {
             setError('Failed to post comment. Please try again.');
             console.error('Error adding comment: ', error);
         } finally {
             setIsSubmitting(false);
         }
-    }, [uploadImage]);
+    }, [uploadImage, fetchComments]);
 
     const formatDate = useCallback((timestamp) => {
         if (!timestamp) return '';
