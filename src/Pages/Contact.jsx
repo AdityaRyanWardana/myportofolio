@@ -110,7 +110,7 @@ const ContactPage = () => {
   };
 
   return (
-    <div className="px-[5%] sm:px-[5%] lg:px-[10%] pt-2 pb-8 lg:pt-4 lg:pb-12" id="Contact">
+    <div className="px-[5%] sm:px-[5%] lg:px-[10%] pt-14 pb-8 lg:pt-16 lg:pb-12" id="Contact">
       <div className="text-center mb-2 sm:px-0 px-[5%]">
         <h2
           data-aos="fade-down"
