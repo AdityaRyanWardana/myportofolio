@@ -130,22 +130,50 @@ const ProjectDetails = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     setActiveImageIndex(0); // Reset active image when project changes
-    const storedProjects = JSON.parse(localStorage.getItem("projects")) || [];
-    // Cari project berdasarkan slug yang di-generate dari Title
-    const selectedProject = storedProjects.find(
-      (p) => toSlug(p.Title) === slug,
-    );
 
-    if (selectedProject) {
-      const enhancedProject = {
-        ...selectedProject,
-        Features: selectedProject.Features || [],
-        TechStack: selectedProject.TechStack || [],
-        Github: selectedProject.Github || "https://github.com/AdityaRyanWardana",
-        Images: Array.isArray(selectedProject.Images) ? selectedProject.Images : []
-      };
-      setProject(enhancedProject);
-    }
+    const fetchProjectDetails = async () => {
+      // 1. Try loading from localStorage first for instant display
+      const storedProjects = JSON.parse(localStorage.getItem("projects")) || [];
+      const cached = storedProjects.find((p) => toSlug(p.Title) === slug);
+      if (cached) {
+        setProject({
+          ...cached,
+          Features: cached.Features || [],
+          TechStack: cached.TechStack || [],
+          Github: cached.Github || "https://github.com/AdityaRyanWardana",
+          Images: Array.isArray(cached.Images) ? cached.Images : []
+        });
+      }
+
+      // 2. Fetch live data from Supabase directly to ensure it is up to date
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*");
+        
+        if (error) throw error;
+        
+        if (data) {
+          // Update localStorage cache
+          localStorage.setItem("projects", JSON.stringify(data));
+          
+          const liveProject = data.find((p) => toSlug(p.Title) === slug);
+          if (liveProject) {
+            setProject({
+              ...liveProject,
+              Features: liveProject.Features || [],
+              TechStack: liveProject.TechStack || [],
+              Github: liveProject.Github || "https://github.com/AdityaRyanWardana",
+              Images: Array.isArray(liveProject.Images) ? liveProject.Images : []
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching live project details:", err);
+      }
+    };
+
+    fetchProjectDetails();
   }, [slug]);
 
   if (!project) {
