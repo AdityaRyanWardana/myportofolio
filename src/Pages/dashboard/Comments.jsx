@@ -51,17 +51,29 @@ export default function Comments() {
   }, [filter, search]);
 
   const pin = async (id, value) => {
-    await supabase
-      .from("portfolio_comments")
-      .update({ is_pinned: value })
-      .eq("id", id);
-    fetchComments();
+    try {
+      const { error } = await supabase
+        .from("portfolio_comments")
+        .update({ is_pinned: value })
+        .eq("id", id);
+      if (error) throw error;
+      fetchComments();
+    } catch (err) {
+      alert("Failed to pin comment: " + err.message);
+      console.error(err);
+    }
   };
 
   const remove = async (id) => {
     if (!confirm("Delete this comment?")) return;
-    await supabase.from("portfolio_comments").delete().eq("id", id);
-    fetchComments();
+    try {
+      const { error } = await supabase.from("portfolio_comments").delete().eq("id", id);
+      if (error) throw error;
+      fetchComments();
+    } catch (err) {
+      alert("Failed to delete comment: " + err.message);
+      console.error(err);
+    }
   };
 
   const pinnedCount = comments.filter((c) => c.is_pinned).length;
