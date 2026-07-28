@@ -6,7 +6,13 @@ import RotateRightIcon from "@mui/icons-material/RotateRight"
 
 const Certificate = ({ ImgSertif }) => {
 	const [open, setOpen] = useState(false)
-	const [rotation, setRotation] = useState(0)
+	
+	// Detect if this is the Epson certificate to set default rotation to 90 (landscape)
+	const getInitialRotation = () => {
+		return ImgSertif && ImgSertif.toLowerCase().includes("epson") ? 90 : 0
+	}
+
+	const [rotation, setRotation] = useState(getInitialRotation)
 
 	const handleOpen = () => {
 		setOpen(true)
@@ -14,7 +20,7 @@ const Certificate = ({ ImgSertif }) => {
 
 	const handleClose = () => {
 		setOpen(false)
-		setRotation(0) // Reset rotation when modal is closed
+		setRotation(getInitialRotation()) // Reset rotation to initial default when closed
 	}
 
 	const handleRotate = (e) => {
