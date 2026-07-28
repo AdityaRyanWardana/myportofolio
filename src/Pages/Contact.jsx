@@ -110,8 +110,8 @@ const ContactPage = () => {
   };
 
   return (
-    <div className="px-[5%] sm:px-[5%] lg:px-[10%] py-20 lg:py-24" id="Contact">
-      <div className="text-center lg:mt-[5%] mt-10 mb-2 sm:px-0 px-[5%]">
+    <div className="px-[5%] sm:px-[5%] lg:px-[10%] pt-10 pb-12 lg:pt-14 lg:pb-16" id="Contact">
+      <div className="text-center mb-2 sm:px-0 px-[5%]">
         <h2
           data-aos="fade-down"
           data-aos-duration="1000"

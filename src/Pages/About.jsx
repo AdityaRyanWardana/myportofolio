@@ -233,7 +233,7 @@ const AboutPage = () => {
 
   return (
     <div
-      className="h-auto py-20 lg:py-24 text-white overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%]" 
+      className="h-auto pt-10 pb-12 lg:pt-14 lg:pb-16 text-white overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%]" 
       id="About"
       itemScope
       itemType="https://schema.org/Person"

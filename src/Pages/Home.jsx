@@ -191,7 +191,7 @@ const Home = () => {
         `}</script>
       </Helmet>
 
-      <div className="min-h-screen flex items-center pt-28 lg:pt-20 pb-12 bg-[#030014] overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%]" id="Home">
+      <div className="min-h-screen flex items-center pt-20 pb-10 bg-[#030014] overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%]" id="Home">
         <div className="relative z-10 w-full transition-all duration-1000 opacity-100">
           <div className="container mx-auto">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-10">
