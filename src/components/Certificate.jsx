@@ -161,12 +161,14 @@ const Certificate = ({ ImgSertif }) => {
 				<Box
 					sx={{
 						position: "relative",
-						width: "auto",
-						maxWidth: "90vw",
-						maxHeight: "90vh",
+						width: "90vw",
+						height: "90vh",
 						m: 0,
 						p: 0,
 						outline: "none",
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
 						"&:focus": {
 							outline: "none",
 						},
@@ -225,19 +227,19 @@ const Certificate = ({ ImgSertif }) => {
 							width: "100%",
 							height: "100%",
 							overflow: "hidden",
-							p: 4,
+							p: 2,
 						}}>
 						<img
 							src={ImgSertif}
 							alt="Certificate Full View"
 							style={{
 								display: "block",
-								maxWidth: "100%",
-								maxHeight: "80vh",
+								maxWidth: rotation === 90 || rotation === 270 ? "70vh" : "100%",
+								maxHeight: rotation === 90 || rotation === 270 ? "85vw" : "80vh",
 								margin: "0 auto",
 								objectFit: "contain",
 								transform: `rotate(${rotation}deg)`,
-								transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+								transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
 							}}
 						/>
 					</Box>
