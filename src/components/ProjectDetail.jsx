@@ -9,6 +9,9 @@ import {
   Code2,
   Star,
   ChevronRight,
+  ChevronLeft,
+  X,
+  Maximize2,
   Layers,
   Layout,
   Globe,
@@ -126,10 +129,12 @@ const ProjectDetails = () => {
   const [project, setProject] = useState(null);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     setActiveImageIndex(0); // Reset active image when project changes
+    setIsLightboxOpen(false); // Reset lightbox when project changes
 
     const fetchProjectDetails = async () => {
       // 1. Try loading from localStorage first for instant display
@@ -191,6 +196,9 @@ const ProjectDetails = () => {
 
   const projectDescription = language === "en" ? (project.Description_EN || project.description_en || project.Description) : project.Description;
   const projectUrl = `https://adityaryan.com/project/${toSlug(project.Title)}`;
+  const projectImages = Array.isArray(project.Images) && project.Images.length > 0
+    ? project.Images
+    : (project.Img ? [project.Img] : []);
 
   return (
     <>
@@ -329,24 +337,34 @@ const ProjectDetails = () => {
               <div className="space-y-6 md:space-y-10 animate-slideInRight">
                 <div className="space-y-4">
                   {/* Main Image View */}
-                  <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl group aspect-[16/10] bg-white/5 flex items-center justify-center">
-                    {project.Img || (Array.isArray(project.Images) && project.Images.length > 0) ? (
+                  <div 
+                    onClick={() => setIsLightboxOpen(true)}
+                    className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl group aspect-[16/10] bg-white/5 flex items-center justify-center cursor-zoom-in"
+                  >
+                    {projectImages.length > 0 ? (
                       <img
-                        src={Array.isArray(project.Images) && project.Images.length > 0 ? project.Images[activeImageIndex] : project.Img}
+                        src={projectImages[activeImageIndex]}
                         alt={`${project.Title} - Preview`}
-                        className="w-full h-full object-contain transition-all duration-500"
+                        className="w-full h-full object-contain transition-all duration-500 group-hover:scale-[1.02]"
                         onLoad={() => setIsImageLoaded(true)}
                       />
                     ) : (
                       <div className="text-gray-500">No previews available</div>
                     )}
+                    {/* Hover indicator for full screen */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-xs sm:text-sm font-medium">
+                        <Maximize2 className="w-4 h-4" />
+                        <span>Click to Expand</span>
+                      </div>
+                    </div>
                     <div className="absolute inset-0 border-2 border-white/0 group-hover:border-white/10 transition-colors duration-300 rounded-2xl pointer-events-none" />
                   </div>
 
                   {/* Thumbnail Selector */}
-                  {Array.isArray(project.Images) && project.Images.length > 1 && (
-                    <div className="flex gap-2.5 overflow-x-auto py-1 scrollbar-none snap-x">
-                      {project.Images.map((imgUrl, index) => (
+                  {projectImages.length > 1 && (
+                    <div className="flex gap-2.5 overflow-x-auto py-3 scrollbar-none snap-x">
+                      {projectImages.map((imgUrl, index) => (
                         <button
                           key={index}
                           onClick={() => setActiveImageIndex(index)}
@@ -447,6 +465,83 @@ const ProjectDetails = () => {
             }
           }
         `}</style>
+      {/* Lightbox Modal */}
+      {isLightboxOpen && projectImages.length > 0 && (
+        <div 
+          onClick={() => setIsLightboxOpen(false)}
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-md transition-all duration-300 p-4"
+        >
+          {/* Close button */}
+          <button
+            onClick={() => setIsLightboxOpen(false)}
+            className="absolute top-6 right-6 p-2.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-full transition-all hover:scale-105 z-[101]"
+            title="Close"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Navigation controls if there are multiple images */}
+          {projectImages.length > 1 && (
+            <>
+              {/* Prev Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveImageIndex((prev) => (prev === 0 ? projectImages.length - 1 : prev - 1));
+                }}
+                className="absolute left-6 p-3.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-full transition-all hover:scale-105 z-[101] md:block hidden"
+                title="Previous Image"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+
+              {/* Next Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveImageIndex((prev) => (prev === projectImages.length - 1 ? 0 : prev + 1));
+                }}
+                className="absolute right-6 p-3.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-full transition-all hover:scale-105 z-[101] md:block hidden"
+                title="Next Image"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          {/* Centered Image Container */}
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-[90vw] max-h-[80vh] flex flex-col items-center justify-center"
+          >
+            <img
+              src={projectImages[activeImageIndex]}
+              alt={`${project.Title} - Full Screen Preview`}
+              className="max-w-full max-h-full object-contain rounded-xl select-none"
+            />
+            {projectImages.length > 1 && (
+              <div className="mt-5 flex items-center justify-center gap-6">
+                {/* Mobile controls */}
+                <button
+                  onClick={() => setActiveImageIndex((prev) => (prev === 0 ? projectImages.length - 1 : prev - 1))}
+                  className="p-2 bg-white/5 border border-white/10 text-white rounded-full transition-all md:hidden block"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="text-sm text-gray-400 font-medium tracking-wider">
+                  {activeImageIndex + 1} / {projectImages.length}
+                </span>
+                <button
+                  onClick={() => setActiveImageIndex((prev) => (prev === projectImages.length - 1 ? 0 : prev + 1))}
+                  className="p-2 bg-white/5 border border-white/10 text-white rounded-full transition-all md:hidden block"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       </div>
     </>
   );
