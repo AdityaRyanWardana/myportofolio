@@ -7,7 +7,7 @@ import { useLanguage } from "../utils/LanguageContext"
 
 // Memoized Components
 const Header = memo(({ title, subtitle }) => (
-  <div className="text-center lg:mb-8 mb-2 px-[5%]">
+  <div className="text-center lg:mb-4 mb-2 px-[5%]">
     <div className="inline-block relative group">
       <h2 
         className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#6366f1] to-[#a855f7]" 
@@ -233,14 +233,14 @@ const AboutPage = () => {
 
   return (
     <div
-      className="h-auto pt-10 pb-12 lg:pt-14 lg:pb-16 text-white overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%]" 
+      className="h-auto pt-2 pb-8 lg:pt-4 lg:pb-12 text-white overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%]" 
       id="About"
       itemScope
       itemType="https://schema.org/Person"
     >
       <Header title={t("aboutHeader")} subtitle={t("aboutSubtitle")} />
 
-      <div className="w-full mx-auto pt-8 sm:pt-12 relative">
+      <div className="w-full mx-auto pt-4 sm:pt-6 relative">
         <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           <div className="space-y-6 text-center lg:text-left">
             <h2 

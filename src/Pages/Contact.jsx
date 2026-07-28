@@ -110,7 +110,7 @@ const ContactPage = () => {
   };
 
   return (
-    <div className="px-[5%] sm:px-[5%] lg:px-[10%] pt-10 pb-12 lg:pt-14 lg:pb-16" id="Contact">
+    <div className="px-[5%] sm:px-[5%] lg:px-[10%] pt-2 pb-8 lg:pt-4 lg:pb-12" id="Contact">
       <div className="text-center mb-2 sm:px-0 px-[5%]">
         <h2
           data-aos="fade-down"
@@ -140,8 +140,7 @@ const ContactPage = () => {
       </div>
 
       <div
-        className="h-auto py-10 flex items-center justify-center 2xl:pr-[3.1%] lg:pr-[3.8%]  md:px-0"
-        id="Contact"
+        className="h-auto pt-4 pb-6 flex items-center justify-center 2xl:pr-[3.1%] lg:pr-[3.8%] md:px-0"
       >
         <div className="container px-[1%] grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-[45%_55%] 2xl:grid-cols-[35%_65%] gap-12" >
           <div
