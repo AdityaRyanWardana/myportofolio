@@ -455,63 +455,24 @@ export default function Projects() {
 
   const handleCreate = async (form, file, additionalPreviews) => {
     setUploading(true);
-    let imgUrl = "";
-    if (file) imgUrl = await uploadImage(file);
-    
-    // Upload additional preview images
-    const imagesUrls = [];
-    if (Array.isArray(additionalPreviews)) {
-      for (const item of additionalPreviews) {
-        if (typeof item === "string") {
-          imagesUrls.push(item);
-        } else if (item && item.file) {
-          const url = await uploadImage(item.file);
-          imagesUrls.push(url);
+    try {
+      let imgUrl = "";
+      if (file) imgUrl = await uploadImage(file);
+      
+      // Upload additional preview images
+      const imagesUrls = [];
+      if (Array.isArray(additionalPreviews)) {
+        for (const item of additionalPreviews) {
+          if (typeof item === "string") {
+            imagesUrls.push(item);
+          } else if (item && item.file) {
+            const url = await uploadImage(item.file);
+            imagesUrls.push(url);
+          }
         }
       }
-    }
 
-    await supabase.from("projects").insert({
-      Title: form.Title,
-      Description: form.Description,
-      Description_EN: form.Description_EN,
-      Img: imgUrl,
-      Images: imagesUrls,
-      TechStack: form.TechStack.split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-      Features: form.Features.split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-      Link: form.Link,
-      Github: form.Github,
-    });
-    setShowCreate(false);
-    setUploading(false);
-    fetchProjects();
-  };
-
-  const handleEdit = async (form, file, additionalPreviews) => {
-    setUploading(true);
-    let imgUrl = editProject.Img || "";
-    if (file) imgUrl = await uploadImage(file);
-
-    // Process and upload additional previews
-    const imagesUrls = [];
-    if (Array.isArray(additionalPreviews)) {
-      for (const item of additionalPreviews) {
-        if (typeof item === "string") {
-          imagesUrls.push(item);
-        } else if (item && item.file) {
-          const url = await uploadImage(item.file);
-          imagesUrls.push(url);
-        }
-      }
-    }
-
-    await supabase
-      .from("projects")
-      .update({
+      const { error } = await supabase.from("projects").insert({
         Title: form.Title,
         Description: form.Description,
         Description_EN: form.Description_EN,
@@ -525,11 +486,68 @@ export default function Projects() {
           .filter(Boolean),
         Link: form.Link,
         Github: form.Github,
-      })
-      .eq("id", editProject.id);
-    setEditProject(null);
-    setUploading(false);
-    fetchProjects();
+      });
+
+      if (error) throw error;
+
+      setShowCreate(false);
+      fetchProjects();
+    } catch (err) {
+      alert("Failed to save project: " + err.message);
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleEdit = async (form, file, additionalPreviews) => {
+    setUploading(true);
+    try {
+      let imgUrl = editProject.Img || "";
+      if (file) imgUrl = await uploadImage(file);
+
+      // Process and upload additional previews
+      const imagesUrls = [];
+      if (Array.isArray(additionalPreviews)) {
+        for (const item of additionalPreviews) {
+          if (typeof item === "string") {
+            imagesUrls.push(item);
+          } else if (item && item.file) {
+            const url = await uploadImage(item.file);
+            imagesUrls.push(url);
+          }
+        }
+      }
+
+      const { error } = await supabase
+        .from("projects")
+        .update({
+          Title: form.Title,
+          Description: form.Description,
+          Description_EN: form.Description_EN,
+          Img: imgUrl,
+          Images: imagesUrls,
+          TechStack: form.TechStack.split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          Features: form.Features.split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          Link: form.Link,
+          Github: form.Github,
+        })
+        .eq("id", editProject.id);
+
+      if (error) throw error;
+
+      setEditProject(null);
+      fetchProjects();
+    } catch (err) {
+      alert("Failed to update project: " + err.message);
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const deleteProject = async (id) => {
