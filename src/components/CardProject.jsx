@@ -1,27 +1,30 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ExternalLink, ArrowRight } from "lucide-react";
 import { toSlug } from "../utils/slug";
 
 const CardProject = ({ Img, Title, Description, Link: ProjectLink, id }) => {
+  const navigate = useNavigate();
+
   const handleLiveDemo = (e) => {
+    e.stopPropagation(); // Prevent card navigation when opening live demo
     if (!ProjectLink) {
-      console.log("ProjectLink kosong");
       e.preventDefault();
       alert("Live demo link is not available");
     }
   };
 
-  const handleDetails = (e) => {
-    if (!id) {
-      console.log("ID kosong");
-      e.preventDefault();
-      alert("Project details are not available");
+  const handleCardClick = () => {
+    if (id && Title) {
+      navigate(`/project/${toSlug(Title)}`);
     }
   };
 
   return (
-    <div className="group relative w-full h-full flex">
+    <div 
+      onClick={handleCardClick}
+      className="group relative w-full h-full flex cursor-pointer"
+    >
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-lg border border-white/10 shadow-2xl transition-all duration-300 hover:shadow-purple-500/20 h-full w-full flex flex-col">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 opacity-50 group-hover:opacity-70 transition-opacity duration-300"></div>
 
@@ -65,14 +68,12 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id }) => {
             )}
 
             {id ? (
-              <Link
-                to={`/project/${toSlug(Title)}`}
-                onClick={handleDetails}
-                className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/90 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+              <div
+                className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-white/5 group-hover:bg-white/10 text-white/90 transition-all duration-200 group-hover:scale-105 active:scale-95"
               >
                 <span className="text-sm font-medium">Details</span>
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </div>
             ) : (
               <span className="text-gray-500 text-sm">
                 Details Not Available
