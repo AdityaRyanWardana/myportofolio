@@ -233,11 +233,10 @@ const AboutPage = () => {
 
   return (
     <div
-      className="h-auto pb-[10%] text-white overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%] mt-10 sm-mt-0" 
+      className="h-auto py-20 lg:py-24 text-white overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%]" 
       id="About"
-     itemScope
-  itemType="https://schema.org/Person"
-
+      itemScope
+      itemType="https://schema.org/Person"
     >
       <Header title={t("aboutHeader")} subtitle={t("aboutSubtitle")} />
 
