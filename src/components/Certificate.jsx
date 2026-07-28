@@ -3,6 +3,8 @@ import { Modal, IconButton, Box, Fade, Backdrop, Zoom, Typography } from "@mui/m
 import CloseIcon from "@mui/icons-material/Close"
 import FullscreenIcon from "@mui/icons-material/Fullscreen"
 import RotateRightIcon from "@mui/icons-material/RotateRight"
+import ZoomInIcon from "@mui/icons-material/ZoomIn"
+import ZoomOutIcon from "@mui/icons-material/ZoomOut"
 
 const Certificate = ({ ImgSertif }) => {
 	const [open, setOpen] = useState(false)
@@ -13,6 +15,10 @@ const Certificate = ({ ImgSertif }) => {
 	}
 
 	const [rotation, setRotation] = useState(getInitialRotation)
+	const [scale, setScale] = useState(1)
+	const [position, setPosition] = useState({ x: 0, y: 0 })
+	const [isDragging, setIsDragging] = useState(false)
+	const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
 
 	const handleOpen = () => {
 		setOpen(true)
@@ -20,12 +26,53 @@ const Certificate = ({ ImgSertif }) => {
 
 	const handleClose = () => {
 		setOpen(false)
-		setRotation(getInitialRotation()) // Reset rotation to initial default when closed
+		setRotation(getInitialRotation()) // Reset rotation to initial default
+		setScale(1) // Reset scale to 1
+		setPosition({ x: 0, y: 0 }) // Reset position
+		setIsDragging(false)
 	}
 
 	const handleRotate = (e) => {
 		e.stopPropagation()
 		setRotation((prev) => (prev + 90) % 360)
+	}
+
+	const handleZoomIn = (e) => {
+		e.stopPropagation()
+		setScale((prev) => Math.min(prev + 0.25, 3))
+	}
+
+	const handleZoomOut = (e) => {
+		e.stopPropagation()
+		setScale((prev) => {
+			const newScale = Math.max(prev - 0.25, 1)
+			if (newScale === 1) {
+				setPosition({ x: 0, y: 0 }) // Reset position if zoomed back to normal
+			}
+			return newScale
+		})
+	}
+
+	const handleMouseDown = (e) => {
+		if (scale > 1) {
+			e.preventDefault()
+			setIsDragging(true)
+			setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y })
+		}
+	}
+
+	const handleMouseMove = (e) => {
+		if (isDragging && scale > 1) {
+			e.preventDefault()
+			setPosition({
+				x: e.clientX - dragStart.x,
+				y: e.clientY - dragStart.y
+			})
+		}
+	}
+
+	const handleMouseUp = () => {
+		setIsDragging(false)
 	}
 
 	return (
@@ -173,7 +220,7 @@ const Certificate = ({ ImgSertif }) => {
 							outline: "none",
 						},
 					}}>
-					{/* Controls (Rotate & Close) */}
+					{/* Controls (Zoom, Rotate & Close) */}
 					<Box
 						sx={{
 							position: "absolute",
@@ -183,6 +230,42 @@ const Certificate = ({ ImgSertif }) => {
 							display: "flex",
 							gap: 1.5,
 						}}>
+						{/* Zoom In Button */}
+						<IconButton
+							onClick={handleZoomIn}
+							sx={{
+								color: "white",
+								bgcolor: "rgba(0,0,0,0.6)",
+								padding: 1,
+								"&:hover": {
+									bgcolor: "rgba(0,0,0,0.8)",
+									transform: "scale(1.1)",
+								},
+							}}
+							size="large"
+							title="Zoom In"
+							disabled={scale >= 3}>
+							<ZoomInIcon sx={{ fontSize: 24 }} />
+						</IconButton>
+
+						{/* Zoom Out Button */}
+						<IconButton
+							onClick={handleZoomOut}
+							sx={{
+								color: "white",
+								bgcolor: "rgba(0,0,0,0.6)",
+								padding: 1,
+								"&:hover": {
+									bgcolor: "rgba(0,0,0,0.8)",
+									transform: "scale(1.1)",
+								},
+							}}
+							size="large"
+							title="Zoom Out"
+							disabled={scale <= 1}>
+							<ZoomOutIcon sx={{ fontSize: 24 }} />
+						</IconButton>
+
 						{/* Rotate Button */}
 						<IconButton
 							onClick={handleRotate}
@@ -218,8 +301,11 @@ const Certificate = ({ ImgSertif }) => {
 						</IconButton>
 					</Box>
 
-					{/* Modal Image Wrapper with Rotation */}
+					{/* Modal Image Wrapper with Rotation & Panning */}
 					<Box
+						onMouseMove={handleMouseMove}
+						onMouseUp={handleMouseUp}
+						onMouseLeave={handleMouseUp}
 						sx={{
 							display: "flex",
 							alignItems: "center",
@@ -228,18 +314,22 @@ const Certificate = ({ ImgSertif }) => {
 							height: "100%",
 							overflow: "hidden",
 							p: 2,
+							cursor: scale > 1 ? (isDragging ? "grabbing" : "grab") : "default",
 						}}>
 						<img
 							src={ImgSertif}
 							alt="Certificate Full View"
+							onMouseDown={handleMouseDown}
+							onDragStart={(e) => e.preventDefault()}
 							style={{
 								display: "block",
 								maxWidth: rotation === 90 || rotation === 270 ? "70vh" : "100%",
 								maxHeight: rotation === 90 || rotation === 270 ? "85vw" : "80vh",
 								margin: "0 auto",
 								objectFit: "contain",
-								transform: `rotate(${rotation}deg)`,
-								transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+								transform: `translate(${position.x}px, ${position.y}px) rotate(${rotation}deg) scale(${scale})`,
+								transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+								userSelect: "none",
 							}}
 						/>
 					</Box>
