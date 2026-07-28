@@ -205,6 +205,12 @@ const ProjectForm = ({
   });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(initial?.Img || null);
+  
+  // State for multiple previews
+  const [additionalFiles, setAdditionalFiles] = useState([]);
+  const [additionalPreviews, setAdditionalPreviews] = useState(
+    Array.isArray(initial?.Images) ? initial.Images : []
+  );
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -215,11 +221,33 @@ const ProjectForm = ({
     setPreview(URL.createObjectURL(f));
   };
 
+  const handleMultipleFilesChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    setAdditionalFiles((prev) => [...prev, ...files]);
+    
+    const newPreviews = files.map((f) => ({
+      file: f,
+      url: URL.createObjectURL(f)
+    }));
+    setAdditionalPreviews((prev) => [...prev, ...newPreviews]);
+  };
+
+  const handleRemovePreview = (indexToRemove) => {
+    const item = additionalPreviews[indexToRemove];
+    setAdditionalPreviews((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    
+    if (item && item.file) {
+      setAdditionalFiles((prev) => prev.filter((f) => f !== item.file));
+    }
+  };
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit(form, file);
+        onSubmit(form, file, additionalPreviews);
       }}
       className="p-5 sm:p-6 space-y-4"
     >
@@ -289,7 +317,7 @@ const ProjectForm = ({
 
         <div className="sm:col-span-2 space-y-1.5">
           <label className="text-xs text-indigo-300/70 uppercase tracking-wider font-medium">
-            Project Image
+            Project Main Image
           </label>
           <label className="flex items-center gap-4 w-full bg-[#0d0d22] border border-dashed border-white/15 rounded-xl px-4 py-4 cursor-pointer hover:border-indigo-500/40 hover:bg-white/4 transition-all">
             {preview ? (
@@ -318,6 +346,54 @@ const ProjectForm = ({
               className="hidden"
             />
           </label>
+        </div>
+
+        {/* Additional Previews */}
+        <div className="sm:col-span-2 space-y-3">
+          <label className="text-xs text-indigo-300/70 uppercase tracking-wider font-medium">
+            Project Previews (Upload Multiple Images)
+          </label>
+          <label className="flex items-center gap-4 w-full bg-[#0d0d22] border border-dashed border-white/15 rounded-xl px-4 py-4 cursor-pointer hover:border-indigo-500/40 hover:bg-white/4 transition-all">
+            <div className="w-24 h-16 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
+              <Upload className="w-5 h-5 text-gray-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-300">
+                Click to upload multiple previews
+              </p>
+              <p className="text-xs text-gray-600 mt-0.5">
+                PNG, JPG, WEBP supported
+              </p>
+            </div>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleMultipleFilesChange}
+              className="hidden"
+            />
+          </label>
+
+          {/* Previews Grid */}
+          {additionalPreviews.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-3">
+              {additionalPreviews.map((item, index) => {
+                const url = typeof item === "string" ? item : item.url;
+                return (
+                  <div key={index} className="relative group/thumb aspect-[16/10] rounded-lg overflow-hidden border border-white/10 bg-white/5">
+                    <img src={url} className="w-full h-full object-cover" alt="preview" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePreview(index)}
+                      className="absolute top-1 right-1 p-1 bg-red-500 rounded-full text-white opacity-0 group-hover/thumb:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -377,15 +453,30 @@ export default function Projects() {
     return data.publicUrl;
   };
 
-  const handleCreate = async (form, file) => {
+  const handleCreate = async (form, file, additionalPreviews) => {
     setUploading(true);
     let imgUrl = "";
     if (file) imgUrl = await uploadImage(file);
+    
+    // Upload additional preview images
+    const imagesUrls = [];
+    if (Array.isArray(additionalPreviews)) {
+      for (const item of additionalPreviews) {
+        if (typeof item === "string") {
+          imagesUrls.push(item);
+        } else if (item && item.file) {
+          const url = await uploadImage(item.file);
+          imagesUrls.push(url);
+        }
+      }
+    }
+
     await supabase.from("projects").insert({
       Title: form.Title,
       Description: form.Description,
       Description_EN: form.Description_EN,
       Img: imgUrl,
+      Images: imagesUrls,
       TechStack: form.TechStack.split(",")
         .map((s) => s.trim())
         .filter(Boolean),
@@ -400,10 +491,24 @@ export default function Projects() {
     fetchProjects();
   };
 
-  const handleEdit = async (form, file) => {
+  const handleEdit = async (form, file, additionalPreviews) => {
     setUploading(true);
     let imgUrl = editProject.Img || "";
     if (file) imgUrl = await uploadImage(file);
+
+    // Process and upload additional previews
+    const imagesUrls = [];
+    if (Array.isArray(additionalPreviews)) {
+      for (const item of additionalPreviews) {
+        if (typeof item === "string") {
+          imagesUrls.push(item);
+        } else if (item && item.file) {
+          const url = await uploadImage(item.file);
+          imagesUrls.push(url);
+        }
+      }
+    }
+
     await supabase
       .from("projects")
       .update({
@@ -411,6 +516,7 @@ export default function Projects() {
         Description: form.Description,
         Description_EN: form.Description_EN,
         Img: imgUrl,
+        Images: imagesUrls,
         TechStack: form.TechStack.split(",")
           .map((s) => s.trim())
           .filter(Boolean),

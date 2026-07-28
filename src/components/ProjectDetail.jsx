@@ -125,9 +125,11 @@ const ProjectDetails = () => {
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    setActiveImageIndex(0); // Reset active image when project changes
     const storedProjects = JSON.parse(localStorage.getItem("projects")) || [];
     // Cari project berdasarkan slug yang di-generate dari Title
     const selectedProject = storedProjects.find(
@@ -140,6 +142,7 @@ const ProjectDetails = () => {
         Features: selectedProject.Features || [],
         TechStack: selectedProject.TechStack || [],
         Github: selectedProject.Github || "https://github.com/AdityaRyanWardana",
+        Images: Array.isArray(selectedProject.Images) ? selectedProject.Images : []
       };
       setProject(enhancedProject);
     }
@@ -296,15 +299,40 @@ const ProjectDetails = () => {
               </div>
 
               <div className="space-y-6 md:space-y-10 animate-slideInRight">
-                <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl group">
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#030014] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <img
-                    src={project.Img}
-                    alt={project.Title}
-                    className="w-full object-cover transform transition-transform duration-700 will-change-transform group-hover:scale-105"
-                    onLoad={() => setIsImageLoaded(true)}
-                  />
-                  <div className="absolute inset-0 border-2 border-white/0 group-hover:border-white/10 transition-colors duration-300 rounded-2xl" />
+                <div className="space-y-4">
+                  {/* Main Image View */}
+                  <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl group aspect-[16/10] bg-white/5 flex items-center justify-center">
+                    {project.Img || (Array.isArray(project.Images) && project.Images.length > 0) ? (
+                      <img
+                        src={Array.isArray(project.Images) && project.Images.length > 0 ? project.Images[activeImageIndex] : project.Img}
+                        alt={`${project.Title} - Preview`}
+                        className="w-full h-full object-contain transition-all duration-500"
+                        onLoad={() => setIsImageLoaded(true)}
+                      />
+                    ) : (
+                      <div className="text-gray-500">No previews available</div>
+                    )}
+                    <div className="absolute inset-0 border-2 border-white/0 group-hover:border-white/10 transition-colors duration-300 rounded-2xl pointer-events-none" />
+                  </div>
+
+                  {/* Thumbnail Selector */}
+                  {Array.isArray(project.Images) && project.Images.length > 1 && (
+                    <div className="flex gap-2.5 overflow-x-auto py-1 scrollbar-none snap-x">
+                      {project.Images.map((imgUrl, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setActiveImageIndex(index)}
+                          className={`relative w-20 h-12 sm:w-24 sm:h-14 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 snap-start ${
+                            activeImageIndex === index 
+                              ? 'border-purple-500 scale-105 shadow-lg shadow-purple-500/20' 
+                              : 'border-white/10 opacity-60 hover:opacity-100 hover:border-white/20'
+                          }`}
+                        >
+                          <img src={imgUrl} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-8 border border-white/10 space-y-6 hover:border-white/20 transition-colors duration-300 group">
