@@ -2,9 +2,11 @@ import React, { useState } from "react"
 import { Modal, IconButton, Box, Fade, Backdrop, Zoom, Typography } from "@mui/material"
 import CloseIcon from "@mui/icons-material/Close"
 import FullscreenIcon from "@mui/icons-material/Fullscreen"
+import RotateRightIcon from "@mui/icons-material/RotateRight"
 
 const Certificate = ({ ImgSertif }) => {
 	const [open, setOpen] = useState(false)
+	const [rotation, setRotation] = useState(0)
 
 	const handleOpen = () => {
 		setOpen(true)
@@ -12,6 +14,12 @@ const Certificate = ({ ImgSertif }) => {
 
 	const handleClose = () => {
 		setOpen(false)
+		setRotation(0) // Reset rotation when modal is closed
+	}
+
+	const handleRotate = (e) => {
+		e.stopPropagation()
+		setRotation((prev) => (prev + 90) % 360)
 	}
 
 	return (
@@ -157,38 +165,76 @@ const Certificate = ({ ImgSertif }) => {
 							outline: "none",
 						},
 					}}>
-					{/* Close Button */}
-					<IconButton
-						onClick={handleClose}
+					{/* Controls (Rotate & Close) */}
+					<Box
 						sx={{
 							position: "absolute",
 							right: 16,
 							top: 16,
-							color: "white",
-							bgcolor: "rgba(0,0,0,0.6)",
-							zIndex: 1,
-							padding: 1,
-							"&:hover": {
-								bgcolor: "rgba(0,0,0,0.8)",
-								transform: "scale(1.1)",
-							},
-						}}
-						size="large">
-						<CloseIcon sx={{ fontSize: 24 }} />
-					</IconButton>
+							zIndex: 10,
+							display: "flex",
+							gap: 1.5,
+						}}>
+						{/* Rotate Button */}
+						<IconButton
+							onClick={handleRotate}
+							sx={{
+								color: "white",
+								bgcolor: "rgba(0,0,0,0.6)",
+								padding: 1,
+								"&:hover": {
+									bgcolor: "rgba(0,0,0,0.8)",
+									transform: "scale(1.1)",
+								},
+							}}
+							size="large"
+							title="Rotate 90°">
+							<RotateRightIcon sx={{ fontSize: 24 }} />
+						</IconButton>
 
-					{/* Modal Image */}
-					<img
-						src={ImgSertif}
-						alt="Certificate Full View"
-						style={{
-							display: "block",
-							maxWidth: "100%",
-							maxHeight: "90vh",
-							margin: "0 auto",
-							objectFit: "contain",
-						}}
-					/>
+						{/* Close Button */}
+						<IconButton
+							onClick={handleClose}
+							sx={{
+								color: "white",
+								bgcolor: "rgba(0,0,0,0.6)",
+								padding: 1,
+								"&:hover": {
+									bgcolor: "rgba(0,0,0,0.8)",
+									transform: "scale(1.1)",
+								},
+							}}
+							size="large"
+							title="Close">
+							<CloseIcon sx={{ fontSize: 24 }} />
+						</IconButton>
+					</Box>
+
+					{/* Modal Image Wrapper with Rotation */}
+					<Box
+						sx={{
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							width: "100%",
+							height: "100%",
+							overflow: "hidden",
+							p: 4,
+						}}>
+						<img
+							src={ImgSertif}
+							alt="Certificate Full View"
+							style={{
+								display: "block",
+								maxWidth: "100%",
+								maxHeight: "80vh",
+								margin: "0 auto",
+								objectFit: "contain",
+								transform: `rotate(${rotation}deg)`,
+								transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+							}}
+						/>
+					</Box>
 				</Box>
 			</Modal>
 		</Box>
