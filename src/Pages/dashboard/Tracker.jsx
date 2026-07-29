@@ -423,13 +423,22 @@ export default function Tracker() {
                       </td>
 
                       {/* Location */}
-                      <td className="p-0">
+                      <td 
+                        className="p-0 cursor-pointer"
+                        onClick={() => {
+                          const url = getGoogleMapsUrl(log.city, log.region, log.country);
+                          if (url) {
+                            window.open(url, "_blank", "noopener,noreferrer");
+                          }
+                        }}
+                      >
                         {getGoogleMapsUrl(log.city, log.region, log.country) ? (
                           <a
                             href={getGoogleMapsUrl(log.city, log.region, log.country)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group/loc relative z-10 flex flex-col px-5 py-4 hover:text-indigo-400 transition-colors cursor-pointer w-full h-full"
+                            onClick={(e) => e.stopPropagation()} // Prevent double-opening when clicking text directly
+                            className="group/loc relative z-10 flex flex-col px-5 py-4 hover:text-indigo-400 transition-colors w-full h-full"
                             title="Open in Google Maps"
                           >
                             <span className="font-semibold text-white group-hover/loc:text-indigo-300 transition-colors flex items-center gap-1.5">
