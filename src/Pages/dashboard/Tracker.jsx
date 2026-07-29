@@ -86,7 +86,7 @@ const formatTimeAgo = (dateString) => {
 const getGoogleMapsUrl = (city, region, country) => {
   const parts = [city, region, country].filter((p) => p && p !== "Unknown");
   if (parts.length === 0) return null;
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parts.join(", "))}`;
+  return `https://www.google.com/maps?q=${encodeURIComponent(parts.join(", "))}`;
 };
 
 /* ─── Main Component ────────────────────────────────────────── */
@@ -429,7 +429,7 @@ export default function Tracker() {
                             href={getGoogleMapsUrl(log.city, log.region, log.country)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group/loc flex flex-col hover:text-indigo-400 transition-colors"
+                            className="group/loc relative z-10 flex flex-col hover:text-indigo-400 transition-colors cursor-pointer"
                             title="Open in Google Maps"
                           >
                             <span className="font-semibold text-white group-hover/loc:text-indigo-300 transition-colors flex items-center gap-1.5">

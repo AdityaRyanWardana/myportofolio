@@ -43,6 +43,25 @@ export default function Comments() {
 
   useEffect(() => {
     fetchComments();
+
+    // Set up real-time subscription to update comments live
+    const subscription = supabase
+      .channel("portfolio_comments_admin")
+      .on("postgres_changes", 
+        { 
+          event: "*", 
+          schema: "public", 
+          table: "portfolio_comments" 
+        }, 
+        () => {
+          fetchComments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Reset page when filter/search changes
