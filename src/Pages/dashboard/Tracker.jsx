@@ -14,6 +14,7 @@ import {
   Clock,
   Compass,
   Monitor,
+  MapPin,
 } from "lucide-react";
 
 /* ─── Shared UI components ──────────────────────────────────── */
@@ -79,6 +80,13 @@ const formatTimeAgo = (dateString) => {
   const days = Math.floor(hours / 24);
   if (days === 1) return "Yesterday";
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+};
+
+/* ─── Google Maps Helper ────────────────────────────────────── */
+const getGoogleMapsUrl = (city, region, country) => {
+  const parts = [city, region, country].filter((p) => p && p !== "Unknown");
+  if (parts.length === 0) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parts.join(", "))}`;
 };
 
 /* ─── Main Component ────────────────────────────────────────── */
@@ -416,15 +424,29 @@ export default function Tracker() {
 
                       {/* Location */}
                       <td className="px-5 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-white">
-                            {log.country !== "Unknown" ? log.country : "🌎 Global Visit"}
-                          </span>
-                          <span className="text-xs text-gray-500 mt-0.5">
-                            {log.city !== "Unknown" ? `${log.city}, ` : ""}
-                            {log.region !== "Unknown" ? log.region : ""}
-                          </span>
-                        </div>
+                        {getGoogleMapsUrl(log.city, log.region, log.country) ? (
+                          <a
+                            href={getGoogleMapsUrl(log.city, log.region, log.country)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group/loc flex flex-col hover:text-indigo-400 transition-colors"
+                            title="Open in Google Maps"
+                          >
+                            <span className="font-semibold text-white group-hover/loc:text-indigo-300 transition-colors flex items-center gap-1.5">
+                              {log.country}
+                              <MapPin className="w-3.5 h-3.5 text-gray-500 group-hover/loc:text-indigo-400 transition-colors" />
+                            </span>
+                            <span className="text-xs text-gray-500 mt-0.5 group-hover/loc:text-gray-400 transition-colors">
+                              {log.city !== "Unknown" ? `${log.city}, ` : ""}
+                              {log.region !== "Unknown" ? log.region : ""}
+                            </span>
+                          </a>
+                        ) : (
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-white">🌎 Global Visit</span>
+                            <span className="text-xs text-gray-500 mt-0.5">Unknown Location</span>
+                          </div>
+                        )}
                       </td>
 
                       {/* Org */}
