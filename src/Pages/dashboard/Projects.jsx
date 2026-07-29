@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Github,
   Pencil,
+  GripVertical,
 } from "lucide-react";
 
 const Card = ({ children, className = "" }) => (
@@ -243,6 +244,30 @@ const ProjectForm = ({
     }
   };
 
+  // Drag and Drop state and handlers
+  const [draggedIndex, setDraggedIndex] = useState(null);
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    const updatedPreviews = [...additionalPreviews];
+    const [draggedItem] = updatedPreviews.splice(draggedIndex, 1);
+    updatedPreviews.splice(index, 0, draggedItem);
+
+    setDraggedIndex(index);
+    setAdditionalPreviews(updatedPreviews);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
   return (
     <form
       onSubmit={(e) => {
@@ -379,15 +404,42 @@ const ProjectForm = ({
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-3">
               {additionalPreviews.map((item, index) => {
                 const url = typeof item === "string" ? item : item.url;
+                const isDragging = draggedIndex === index;
                 return (
-                  <div key={index} className="relative group/thumb aspect-[16/10] rounded-lg overflow-hidden border border-white/10 bg-white/5">
-                    <img src={url} className="w-full h-full object-cover" alt="preview" />
+                  <div
+                    key={index}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragEnd={handleDragEnd}
+                    className={`relative group/thumb aspect-[16/10] rounded-lg overflow-hidden border bg-white/5 cursor-grab active:cursor-grabbing transition-all duration-200 select-none ${
+                      isDragging
+                        ? "opacity-40 scale-95 border-indigo-500 shadow-lg shadow-indigo-500/10"
+                        : "border-white/10 hover:border-indigo-500/30 hover:scale-[1.02]"
+                    }`}
+                  >
+                    <img
+                      src={url}
+                      className="w-full h-full object-cover pointer-events-none select-none"
+                      alt="preview"
+                      draggable="false"
+                    />
+                    
+                    {/* Drag Handle Indicator Overlay */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                      <GripVertical className="w-5 h-5 text-indigo-400 drop-shadow-md" />
+                    </div>
+
                     <button
                       type="button"
-                      onClick={() => handleRemovePreview(index)}
-                      className="absolute top-1 right-1 p-1 bg-red-500 rounded-full text-white opacity-0 group-hover/thumb:opacity-100 transition-opacity"
+                      draggable="false"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemovePreview(index);
+                      }}
+                      className="absolute top-1.5 right-1.5 p-1.5 bg-red-500/80 hover:bg-red-600 rounded-full text-white opacity-0 group-hover/thumb:opacity-100 transition-all hover:scale-110 active:scale-95 z-10 shadow-lg"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-3 h-3" draggable="false" />
                     </button>
                   </div>
                 );
