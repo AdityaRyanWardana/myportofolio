@@ -423,13 +423,13 @@ export default function Tracker() {
                       </td>
 
                       {/* Location */}
-                      <td className="px-5 py-4">
+                      <td className="p-0">
                         {getGoogleMapsUrl(log.city, log.region, log.country) ? (
                           <a
                             href={getGoogleMapsUrl(log.city, log.region, log.country)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group/loc relative z-10 flex flex-col hover:text-indigo-400 transition-colors cursor-pointer"
+                            className="group/loc relative z-10 flex flex-col px-5 py-4 hover:text-indigo-400 transition-colors cursor-pointer w-full h-full"
                             title="Open in Google Maps"
                           >
                             <span className="font-semibold text-white group-hover/loc:text-indigo-300 transition-colors flex items-center gap-1.5">
@@ -442,7 +442,7 @@ export default function Tracker() {
                             </span>
                           </a>
                         ) : (
-                          <div className="flex flex-col">
+                          <div className="flex flex-col px-5 py-4">
                             <span className="font-semibold text-white">🌎 Global Visit</span>
                             <span className="text-xs text-gray-500 mt-0.5">Unknown Location</span>
                           </div>
