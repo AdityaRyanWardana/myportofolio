@@ -99,15 +99,21 @@ const Home = () => {
   const [visitor, setVisitor] = useState(null)
 
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem("visitor_info") || localStorage.getItem("visitor_info");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed?.name) setVisitor(parsed);
+    const loadVisitor = () => {
+      try {
+        const raw = sessionStorage.getItem("visitor_info") || localStorage.getItem("visitor_info");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.name) setVisitor(parsed);
+        }
+      } catch (e) {
+        console.warn("Visitor info parse error:", e);
       }
-    } catch (e) {
-      console.warn("Visitor info parse error:", e);
-    }
+    };
+
+    loadVisitor();
+    window.addEventListener("visitor_info_updated", loadVisitor);
+    return () => window.removeEventListener("visitor_info_updated", loadVisitor);
   }, []);
 
   const WORDS = t("typingWords")

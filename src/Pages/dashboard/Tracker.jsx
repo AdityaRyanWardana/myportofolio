@@ -273,7 +273,7 @@ export default function Tracker() {
     if (!window.confirm("Are you sure you want to clear ALL access logs? This action is irreversible.")) return;
     setClearing(true);
     try {
-      const { error } = await supabase.from("visitors").delete().neq("id", "00000000-0000-0000-0000-000000000000"); // deletes all
+      const { error } = await supabase.from("visitors").delete().gte("id", 0); // deletes all bigint rows
       if (error) throw error;
       setPage(1);
       setSearch("");

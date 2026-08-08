@@ -65,37 +65,35 @@ const LandingPage = ({ showWelcome, setShowWelcome }) => {
 
   const handleWelcomeComplete = () => {
     setShowWelcome(false);
-    const alreadyHandled = sessionStorage.getItem("visitor_identity_handled");
-    if (!alreadyHandled) {
+    const hasSeenPrompt = sessionStorage.getItem("visitor_prompt_seen");
+    if (!hasSeenPrompt) {
       setShowPrompt(true);
     } else if (!sessionStorage.getItem("tracked_session")) {
-      const savedInfo = JSON.parse(sessionStorage.getItem("visitor_info") || "null");
+      const savedInfo = JSON.parse(sessionStorage.getItem("visitor_info") || localStorage.getItem("visitor_info") || "null");
       saveAndTrackVisitor(savedInfo);
     }
   };
 
   useEffect(() => {
     if (!showWelcome) {
-      const alreadyHandled = sessionStorage.getItem("visitor_identity_handled");
-      if (!alreadyHandled) {
+      const hasSeenPrompt = sessionStorage.getItem("visitor_prompt_seen");
+      if (!hasSeenPrompt) {
         setShowPrompt(true);
-      } else if (!sessionStorage.getItem("tracked_session")) {
-        const savedInfo = JSON.parse(sessionStorage.getItem("visitor_info") || "null");
-        saveAndTrackVisitor(savedInfo);
       }
     }
   }, [showWelcome]);
 
   const handlePromptSubmit = async (data) => {
-    sessionStorage.setItem("visitor_identity_handled", "true");
+    sessionStorage.setItem("visitor_prompt_seen", "true");
     sessionStorage.setItem("visitor_info", JSON.stringify(data));
     localStorage.setItem("visitor_info", JSON.stringify(data));
+    window.dispatchEvent(new Event("visitor_info_updated"));
     setShowPrompt(false);
     await saveAndTrackVisitor(data);
   };
 
   const handlePromptSkip = async () => {
-    sessionStorage.setItem("visitor_identity_handled", "true");
+    sessionStorage.setItem("visitor_prompt_seen", "true");
     setShowPrompt(false);
     await saveAndTrackVisitor(null);
   };
