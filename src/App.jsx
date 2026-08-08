@@ -1,3 +1,4 @@
+// App Version: 5.1.0 - Visitor Prompt & Tracker Live
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { supabase } from "./supabase";
