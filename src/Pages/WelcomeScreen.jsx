@@ -52,8 +52,8 @@ const WelcomeScreen = ({ onLoadingComplete }) => {
 
   useEffect(() => {
     AOS.init({
-      duration: 1000,
-      once: false,
+      duration: 800,
+      once: true,
       mirror: false,
     });
 
@@ -61,8 +61,8 @@ const WelcomeScreen = ({ onLoadingComplete }) => {
       setIsLoading(false);
       setTimeout(() => {
         onCompleteRef.current?.();
-      }, 800);
-    }, 3200);
+      }, 500);
+    }, 2800);
     
     return () => clearTimeout(timer);
   }, []);
@@ -70,34 +70,32 @@ const WelcomeScreen = ({ onLoadingComplete }) => {
   const containerVariants = {
     exit: {
       opacity: 0,
-      scale: 1.1,
-      filter: "blur(10px)",
+      scale: 1.05,
+      filter: "blur(8px)",
       transition: {
-        duration: 0.8,
+        duration: 0.5,
         ease: "easeInOut",
-        when: "beforeChildren",
-        staggerChildren: 0.1
       }
     }
   };
 
   const childVariants = {
     exit: {
-      y: -20,
+      y: -15,
       opacity: 0,
       transition: {
-        duration: 0.4,
+        duration: 0.3,
         ease: "easeInOut"
       }
     }
   };
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {isLoading && (
         <motion.div
-          className="fixed inset-0 bg-[#030014]"
-          initial={{ opacity: 0 }}
+          className="fixed inset-0 z-50 bg-[#030014] flex items-center justify-center overflow-hidden"
+          initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
           exit="exit"
           variants={containerVariants}

@@ -7,8 +7,6 @@ export default function VisitorPromptModal({ isOpen, onSubmit, onSkip }) {
   const [instansi, setInstansi] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isOpen) return null;
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -25,23 +23,25 @@ export default function VisitorPromptModal({ isOpen, onSubmit, onSkip }) {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-x-hidden overflow-y-auto">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-[#030014]/80 backdrop-blur-md"
-        />
+      {isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-x-hidden overflow-y-auto">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleSkip}
+            className="fixed inset-0 bg-[#030014]/80 backdrop-blur-md"
+          />
 
-        {/* Modal Card */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="relative w-full max-w-md my-8 z-10"
-        >
+          {/* Modal Card */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="relative w-full max-w-md my-8 z-10"
+          >
           {/* Glowing Ambient Gradient */}
           <div className="absolute -inset-1 bg-gradient-to-r from-[#6366f1] via-[#a855f7] to-[#ec4899] rounded-3xl blur-xl opacity-30 animate-pulse pointer-events-none" />
 
