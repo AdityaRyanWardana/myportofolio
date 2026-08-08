@@ -48,7 +48,7 @@ const StatCard = ({ icon: Icon, value, label, subtitle }) => (
 
 /* ─── Visitor Identity Helper ──────────────────────────────── */
 export const parseVisitorIdentity = (log) => {
-  if (!log) return { name: null, instansi: null, isIdentified: false };
+  if (!log || typeof log !== "object") return { name: null, instansi: null, isIdentified: false };
 
   if (log.name || log.instansi) {
     return {
@@ -58,8 +58,9 @@ export const parseVisitorIdentity = (log) => {
     };
   }
 
-  if (log.org && log.org.startsWith("[")) {
-    const match = log.org.match(/^\[(.*?)\]\s*(.*)$/);
+  const orgStr = typeof log.org === "string" ? log.org : "";
+  if (orgStr.startsWith("[")) {
+    const match = orgStr.match(/^\[(.*?)\]\s*(.*)$/);
     if (match) {
       return {
         instansi: match[1] || "Pribadi / Umum",
@@ -69,8 +70,9 @@ export const parseVisitorIdentity = (log) => {
     }
   }
 
-  if (log.referrer && log.referrer.startsWith("Visitor:")) {
-    const match = log.referrer.match(/^Visitor:\s*(.*?)(?:\s*\((.*?)\))?$/);
+  const refStr = typeof log.referrer === "string" ? log.referrer : "";
+  if (refStr.startsWith("Visitor:")) {
+    const match = refStr.match(/^Visitor:\s*(.*?)(?:\s*\((.*?)\))?$/);
     if (match) {
       return {
         name: match[1] || "Tamu",
@@ -80,8 +82,9 @@ export const parseVisitorIdentity = (log) => {
     }
   }
 
-  if (log.user_agent && log.user_agent.startsWith("[Visitor:")) {
-    const match = log.user_agent.match(/^\[Visitor:\s*(.*?)\s*\|\s*(.*?)\]/);
+  const uaStr = typeof log.user_agent === "string" ? log.user_agent : "";
+  if (uaStr.startsWith("[Visitor:")) {
+    const match = uaStr.match(/^\[Visitor:\s*(.*?)\s*\|\s*(.*?)\]/);
     if (match) {
       return {
         name: match[1] || "Tamu",
@@ -100,7 +103,7 @@ export const parseVisitorIdentity = (log) => {
 
 /* ─── User Agent Helper ─────────────────────────────────────── */
 const parseUserAgent = (ua) => {
-  if (!ua) return "Unknown Device";
+  if (!ua || typeof ua !== "string") return "Unknown Device";
   let cleanUa = ua.replace(/^\[Visitor:.*?\]\s*/, "");
   let browser = "Other";
   let os = "Other OS";
@@ -126,6 +129,7 @@ const parseUserAgent = (ua) => {
 const formatTimeAgo = (dateString) => {
   if (!dateString) return "-";
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "-";
   const now = new Date();
   const seconds = Math.floor((now - date) / 1000);
 
@@ -612,24 +616,28 @@ export default function Tracker() {
 
                         {/* Referrer */}
                         <td className="px-5 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <Compass className="w-4 h-4 text-gray-500 shrink-0" />
-                            <span
-                              className={`text-xs px-2 py-0.5 rounded-full border ${
-                                log.referrer.toLowerCase().includes("google")
-                                  ? "bg-red-500/10 border-red-500/20 text-red-300"
-                                  : log.referrer.toLowerCase().includes("github")
-                                  ? "bg-purple-500/10 border-purple-500/20 text-purple-300"
-                                  : log.referrer.toLowerCase().includes("linkedin")
-                                  ? "bg-blue-500/10 border-blue-500/20 text-blue-300"
-                                  : log.referrer === "Direct"
-                                  ? "bg-gray-500/10 border-gray-500/20 text-gray-400"
-                                  : "bg-indigo-500/10 border-indigo-500/20 text-indigo-300"
-                              }`}
-                            >
-                              {log.referrer}
-                            </span>
-                          </div>
+                          {(() => {
+                            const ref = String(log.referrer || "Direct");
+                            const refLower = ref.toLowerCase();
+                            const badgeColor = refLower.includes("google")
+                              ? "bg-red-500/10 border-red-500/20 text-red-300"
+                              : refLower.includes("github")
+                              ? "bg-purple-500/10 border-purple-500/20 text-purple-300"
+                              : refLower.includes("linkedin")
+                              ? "bg-blue-500/10 border-blue-500/20 text-blue-300"
+                              : ref === "Direct"
+                              ? "bg-gray-500/10 border-gray-500/20 text-gray-400"
+                              : "bg-indigo-500/10 border-indigo-500/20 text-indigo-300";
+
+                            return (
+                              <div className="flex items-center gap-2">
+                                <Compass className="w-4 h-4 text-gray-500 shrink-0" />
+                                <span className={`text-xs px-2 py-0.5 rounded-full border ${badgeColor}`}>
+                                  {ref}
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </td>
                       </tr>
                     );

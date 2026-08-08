@@ -111,12 +111,12 @@ const Home = () => {
   }, []);
 
   const WORDS = t("typingWords")
-  const titleLine1 = profileData?.hero_title_1 || t("heroTitle1")
-  const titleLine2 = profileData?.hero_title_2 || t("heroTitle2")
+  const titleLine1 = profileData?.title_line1 || profileData?.hero_title_1 || t("heroTitle1")
+  const titleLine2 = profileData?.title_line2 || profileData?.hero_title_2 || t("heroTitle2")
   const description = profileData
     ? language === 'en'
-      ? profileData.hero_desc_en || profileData.hero_description
-      : profileData.hero_description
+      ? (profileData.desc_home_en || profileData.desc_home || profileData.hero_desc_en || profileData.hero_description)
+      : (profileData.desc_home || profileData.hero_description)
     : language === 'en'
     ? DEFAULT_DESC_EN
     : DEFAULT_DESC_ID
