@@ -98,6 +98,16 @@ const Home = () => {
   const [profileData, setProfileData] = useState(null)
 
   const WORDS = t("typingWords")
+  const titleLine1 = profileData?.hero_title_1 || t("heroTitle1")
+  const titleLine2 = profileData?.hero_title_2 || t("heroTitle2")
+  const description = profileData
+    ? language === 'en'
+      ? profileData.hero_desc_en || profileData.hero_description
+      : profileData.hero_description
+    : language === 'en'
+    ? DEFAULT_DESC_EN
+    : DEFAULT_DESC_ID
+  const techStack = profileData?.tech_stack?.length ? profileData.tech_stack : DEFAULT_TECH_STACK
 
   // Fetch profile from Supabase
   useEffect(() => {
@@ -112,18 +122,14 @@ const Home = () => {
     fetchProfile()
   }, [])
 
-  const techStack = profileData?.tech_stack?.length ? profileData.tech_stack : DEFAULT_TECH_STACK
-  const description = language === "en"
-    ? (profileData?.desc_home_en || profileData?.desc_home || DEFAULT_DESC_EN)
-    : (profileData?.desc_home || DEFAULT_DESC_ID)
-  const titleLine1 = profileData?.title_line1 || 'Full Stack'
-  const titleLine2 = profileData?.title_line2 || 'Developer'
-
   useEffect(() => {
     const initAOS = () => {
       AOS.init({
         once: true,
         offset: 10,
+        duration: 800,
+        easing: 'ease-out-cubic',
+        disable: false
       });
     };
 
@@ -154,7 +160,7 @@ const Home = () => {
         setIsTyping(true);
       }
     }
-  }, [charIndex, isTyping, wordIndex]);
+  }, [charIndex, isTyping, wordIndex, WORDS]);
 
   useEffect(() => {
     const timeout = setTimeout(
@@ -180,13 +186,15 @@ const Home = () => {
             "@context": "https://schema.org",
             "@type": "Person",
             "name": "Aditya Ryan Wardana",
-            "jobTitle": "Full Stack Developer",
             "url": "https://adityaryan.com",
             "sameAs": [
               "https://github.com/AdityaRyanWardana",
               "https://www.linkedin.com/in/aditya-ryan-wardana-a0b065348",
-              "https://www.instagram.com/wrddnaa_/"
-            ]
+              "https://www.instagram.com/wrddnaa_/?hl=en"
+            ],
+            "jobTitle": "Full Stack Web Developer",
+            "knowsAbout": ["React", "JavaScript", "PHP", "Laravel", "Tailwind CSS", "MySQL", "C++"],
+            "description": "Portofolio resmi Aditya Ryan Wardana, Full Stack Web Developer yang berfokus pada penciptaan pengalaman digital yang menarik."
           }
         `}</script>
       </Helmet>
@@ -200,7 +208,18 @@ const Home = () => {
                 data-aos="fade-right"
                 data-aos-delay="200">
                 <div className="space-y-4 sm:space-y-6">
-                  <StatusBadge text={t("statusBadge")} />
+                  <div className="flex flex-wrap items-center gap-3">
+                    <StatusBadge text={t("statusBadge")} />
+                    {visitor?.name && (
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-500/15 via-purple-500/15 to-pink-500/10 border border-indigo-500/30 text-indigo-200 text-xs font-medium backdrop-blur-md animate-fade-in">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>
+                          Selamat Datang, <strong className="text-white font-semibold">{visitor.name}</strong>
+                          {visitor.instansi && visitor.instansi !== "Pribadi / Umum" ? ` (${visitor.instansi})` : ""}! 👋
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   <MainTitle line1={titleLine1} line2={titleLine2} />
 
                   {/* Typing Effect */}

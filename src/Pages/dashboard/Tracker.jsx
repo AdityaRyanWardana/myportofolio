@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../../supabase";
 import {
   Users,
   Eye,
@@ -15,6 +13,10 @@ import {
   Compass,
   Monitor,
   MapPin,
+  UserCheck,
+  Building2,
+  User,
+  Sparkles,
 } from "lucide-react";
 
 /* ─── Shared UI components ──────────────────────────────────── */
@@ -42,25 +44,78 @@ const StatCard = ({ icon: Icon, value, label, subtitle }) => (
   </Card>
 );
 
+/* ─── Visitor Identity Helper ──────────────────────────────── */
+export const parseVisitorIdentity = (log) => {
+  if (!log) return { name: null, instansi: null, isIdentified: false };
+
+  if (log.name || log.instansi) {
+    return {
+      name: log.name || "Tamu",
+      instansi: log.instansi || "Pribadi / Umum",
+      isIdentified: true,
+    };
+  }
+
+  if (log.org && log.org.startsWith("[")) {
+    const match = log.org.match(/^\[(.*?)\]\s*(.*)$/);
+    if (match) {
+      return {
+        instansi: match[1] || "Pribadi / Umum",
+        name: match[2] || "Tamu",
+        isIdentified: true,
+      };
+    }
+  }
+
+  if (log.referrer && log.referrer.startsWith("Visitor:")) {
+    const match = log.referrer.match(/^Visitor:\s*(.*?)(?:\s*\((.*?)\))?$/);
+    if (match) {
+      return {
+        name: match[1] || "Tamu",
+        instansi: match[2] || "Pribadi / Umum",
+        isIdentified: true,
+      };
+    }
+  }
+
+  if (log.user_agent && log.user_agent.startsWith("[Visitor:")) {
+    const match = log.user_agent.match(/^\[Visitor:\s*(.*?)\s*\|\s*(.*?)\]/);
+    if (match) {
+      return {
+        name: match[1] || "Tamu",
+        instansi: match[2] || "Pribadi / Umum",
+        isIdentified: true,
+      };
+    }
+  }
+
+  return {
+    name: null,
+    instansi: null,
+    isIdentified: false,
+  };
+};
+
 /* ─── User Agent Helper ─────────────────────────────────────── */
 const parseUserAgent = (ua) => {
   if (!ua) return "Unknown Device";
+  let cleanUa = ua.replace(/^\[Visitor:.*?\]\s*/, "");
   let browser = "Other";
   let os = "Other OS";
 
   // Browser detection
-  if (ua.includes("Firefox")) browser = "Firefox";
-  else if (ua.includes("Chrome")) browser = "Chrome";
-  else if (ua.includes("Safari")) browser = "Safari";
-  else if (ua.includes("Edge")) browser = "Edge";
-  else if (ua.includes("Opera") || ua.includes("OPR")) browser = "Opera";
+  if (cleanUa.includes("Firefox")) browser = "Firefox";
+  else if (cleanUa.includes("Chrome")) browser = "Chrome";
+  else if (cleanUa.includes("Safari")) browser = "Safari";
+  else if (cleanUa.includes("Edge")) browser = "Edge";
+  else if (cleanUa.includes("Opera") || cleanUa.includes("OPR")) browser = "Opera";
 
   // OS detection
-  if (ua.includes("Windows")) os = "Windows";
-  else if (ua.includes("Macintosh") || ua.includes("Mac OS")) os = "macOS";
-  else if (ua.includes("Linux")) os = "Linux";
-  else if (ua.includes("Android")) os = "Android";
-  else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+  if (cleanUa.includes("Windows")) os = "Windows";
+  else if (cleanUa.includes("Macintosh") || cleanUa.includes("Mac OS")) os = "macOS";
+  else if (cleanUa.includes("Linux")) os = "Linux";
+  else if (cleanUa.includes("Android")) os = "Android";
+  else if (cleanUa.includes("iPhone") || cleanUa.includes("iPad")) os = "iOS";
 
   return `${browser} on ${os}`;
 };
@@ -95,6 +150,7 @@ export default function Tracker() {
   const [loading, setLoading] = useState(true);
   const [clearing, setClearing] = useState(false);
   const [search, setSearch] = useState("");
+  const [filterIdentity, setFilterIdentity] = useState("all"); // "all" | "identified" | "anonymous"
   const [filterYear, setFilterYear] = useState("");
   const [filterMonth, setFilterMonth] = useState("");
   const [filterDay, setFilterDay] = useState("");
@@ -106,6 +162,7 @@ export default function Tracker() {
   const [stats, setStats] = useState({
     totalHits: 0,
     uniqueVisitors: 0,
+    identifiedVisitors: 0,
     todayHits: 0,
   });
 
@@ -116,11 +173,16 @@ export default function Tracker() {
         .from("visitors")
         .select("*", { count: "exact", head: true });
 
-      // 2. Unique IP count
-      const { data: uniqueData } = await supabase
+      // 2. Unique IP count & identified visitors
+      const { data: allData } = await supabase
         .from("visitors")
-        .select("ip");
-      const uniqueIPs = new Set(uniqueData?.map((v) => v.ip) || []);
+        .select("ip, org, referrer, user_agent");
+      
+      const uniqueIPs = new Set(allData?.map((v) => v.ip) || []);
+      const identifiedCount = allData?.filter((v) => {
+        const id = parseVisitorIdentity(v);
+        return id.isIdentified;
+      }).length || 0;
 
       // 3. Today's hits
       const startOfToday = new Date();
@@ -133,6 +195,7 @@ export default function Tracker() {
       setStats({
         totalHits: total || 0,
         uniqueVisitors: uniqueIPs.size,
+        identifiedVisitors: identifiedCount,
         todayHits: today || 0,
       });
     } catch (err) {
@@ -150,8 +213,12 @@ export default function Tracker() {
 
       if (search) {
         query = query.or(
-          `ip.ilike.%${search}%,city.ilike.%${search}%,country.ilike.%${search}%,referrer.ilike.%${search}%`
+          `ip.ilike.%${search}%,city.ilike.%${search}%,country.ilike.%${search}%,referrer.ilike.%${search}%,org.ilike.%${search}%,user_agent.ilike.%${search}%`
         );
+      }
+
+      if (filterIdentity === "identified") {
+        query = query.or(`org.ilike.[%],referrer.ilike.Visitor:%`);
       }
 
       // Apply date filters
@@ -194,7 +261,7 @@ export default function Tracker() {
 
   useEffect(() => {
     fetchLogs();
-  }, [page, search, filterYear, filterMonth, filterDay]);
+  }, [page, search, filterIdentity, filterYear, filterMonth, filterDay]);
 
   const handleClearLogs = async () => {
     if (!window.confirm("Are you sure you want to clear ALL access logs? This action is irreversible.")) return;
@@ -204,6 +271,7 @@ export default function Tracker() {
       if (error) throw error;
       setPage(1);
       setSearch("");
+      setFilterIdentity("all");
       setFilterYear("");
       setFilterMonth("");
       setFilterDay("");
@@ -232,7 +300,7 @@ export default function Tracker() {
           <div>
             <h1 className="text-2xl font-bold text-white">Visitor Tracker</h1>
             <p className="text-gray-500 text-xs">
-              Monitor who visits your portfolio site in real-time
+              Monitor who visits your portfolio site with Name & Institution details
             </p>
           </div>
         </div>
@@ -240,7 +308,7 @@ export default function Tracker() {
         <div className="flex gap-2">
           <button
             onClick={() => { fetchStats(); fetchLogs(); }}
-            className="p-2.5 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-center"
+            className="p-2.5 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-center cursor-pointer"
             title="Refresh logs"
           >
             <RefreshCw className="w-4.5 h-4.5" />
@@ -248,7 +316,7 @@ export default function Tracker() {
           <button
             onClick={handleClearLogs}
             disabled={clearing}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/30 transition-all text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/30 transition-all text-sm font-medium cursor-pointer"
           >
             {clearing ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -261,8 +329,9 @@ export default function Tracker() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard icon={Eye} value={stats.totalHits} label="Total Page Views" subtitle="All-time clicks" />
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <StatCard icon={Eye} value={stats.totalHits} label="Total Page Views" subtitle="All-time visits" />
+        <StatCard icon={UserCheck} value={stats.identifiedVisitors} label="Identified Guests" subtitle="With Name & Institution" />
         <StatCard icon={Users} value={stats.uniqueVisitors} label="Unique Visitors" subtitle="Distinct IP addresses" />
         <StatCard icon={Calendar} value={stats.todayHits} label="Views Today" subtitle="Since midnight" />
       </div>
@@ -271,115 +340,154 @@ export default function Tracker() {
       <Card>
         <div className="p-6 space-y-4">
           {/* Filters Row */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Search Input */}
-            <div className="flex items-center gap-3 bg-[#0d0d22] border border-white/10 rounded-xl px-4 py-2.5 max-w-xs flex-1 min-w-[200px]">
-              <Search className="w-4 h-4 text-gray-500 shrink-0" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                placeholder="Search by IP, Country, City, Referrer..."
-                className="w-full bg-transparent text-gray-200 placeholder-gray-600 text-sm outline-none border-none p-0 focus:ring-0"
-              />
-              {search && (
-                <button onClick={() => setSearch("")} className="text-gray-500 hover:text-gray-300 text-xs font-bold shrink-0">
-                  Clear
+          <div className="space-y-3">
+            {/* Identity Filter Tabs */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex gap-1.5 p-1 rounded-xl bg-white/5 border border-white/10">
+                {[
+                  { value: "all", label: "All Visitors", count: totalCount },
+                  { value: "identified", label: "Identified (Name/Instansi)", count: stats.identifiedVisitors },
+                ].map((tab) => (
+                  <button
+                    key={tab.value}
+                    onClick={() => {
+                      setFilterIdentity(tab.value);
+                      setPage(1);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
+                      filterIdentity === tab.value
+                        ? "bg-gradient-to-r from-indigo-500/25 to-purple-500/20 border border-indigo-500/35 text-white font-medium"
+                        : "text-gray-400 hover:text-gray-200"
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                        filterIdentity === tab.value
+                          ? "bg-indigo-500/30 text-indigo-200"
+                          : "bg-white/5 text-gray-500"
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Reset Button */}
+              {(filterYear || filterMonth || filterDay || search || filterIdentity !== "all") && (
+                <button
+                  onClick={() => {
+                    setFilterYear("");
+                    setFilterMonth("");
+                    setFilterDay("");
+                    setSearch("");
+                    setFilterIdentity("all");
+                    setPage(1);
+                  }}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors px-2 py-1.5 cursor-pointer"
+                >
+                  Reset All Filters
                 </button>
               )}
             </div>
 
-            {/* Year Selector */}
-            <select
-              value={filterYear}
-              onChange={(e) => {
-                setFilterYear(e.target.value);
-                setFilterMonth("");
-                setFilterDay("");
-                setPage(1);
-              }}
-              className="bg-[#0d0d22] border border-white/10 rounded-xl px-3 py-2.5 text-gray-200 text-sm outline-none focus:border-indigo-500/60 transition-all cursor-pointer min-w-[120px]"
-            >
-              <option value="">All Years</option>
-              <option value="2025">2025</option>
-              <option value="2026">2026</option>
-              <option value="2027">2027</option>
-              <option value="2028">2028</option>
-            </select>
+            {/* Inputs & Date Filters */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search Input */}
+              <div className="flex items-center gap-3 bg-[#0d0d22] border border-white/10 rounded-xl px-4 py-2.5 max-w-sm flex-1 min-w-[220px]">
+                <Search className="w-4 h-4 text-gray-500 shrink-0" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                  placeholder="Search by Name, Instansi, IP, City..."
+                  className="w-full bg-transparent text-gray-200 placeholder-gray-600 text-sm outline-none border-none p-0 focus:ring-0"
+                />
+                {search && (
+                  <button onClick={() => setSearch("")} className="text-gray-500 hover:text-gray-300 text-xs font-bold shrink-0">
+                    Clear
+                  </button>
+                )}
+              </div>
 
-            {/* Month Selector */}
-            <select
-              value={filterMonth}
-              disabled={!filterYear}
-              onChange={(e) => {
-                setFilterMonth(e.target.value);
-                setFilterDay("");
-                setPage(1);
-              }}
-              className="bg-[#0d0d22] border border-white/10 rounded-xl px-3 py-2.5 text-gray-200 text-sm outline-none focus:border-indigo-500/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-w-[130px]"
-            >
-              <option value="">All Months</option>
-              <option value="01">January</option>
-              <option value="02">February</option>
-              <option value="03">March</option>
-              <option value="04">April</option>
-              <option value="05">May</option>
-              <option value="06">June</option>
-              <option value="07">July</option>
-              <option value="08">August</option>
-              <option value="09">September</option>
-              <option value="10">October</option>
-              <option value="11">November</option>
-              <option value="12">December</option>
-            </select>
-
-            {/* Day Selector */}
-            <select
-              value={filterDay}
-              disabled={!filterMonth}
-              onChange={(e) => {
-                setFilterDay(e.target.value);
-                setPage(1);
-              }}
-              className="bg-[#0d0d22] border border-white/10 rounded-xl px-3 py-2.5 text-gray-200 text-sm outline-none focus:border-indigo-500/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-w-[110px]"
-            >
-              <option value="">All Days</option>
-              {Array.from(
-                { length: filterYear && filterMonth ? new Date(parseInt(filterYear), parseInt(filterMonth), 0).getDate() : 31 },
-                (_, i) => {
-                  const dayVal = String(i + 1).padStart(2, "0");
-                  return (
-                    <option key={dayVal} value={dayVal}>
-                      {dayVal}
-                    </option>
-                  );
-                }
-              )}
-            </select>
-
-            {/* Reset Button */}
-            {(filterYear || filterMonth || filterDay || search) && (
-              <button
-                onClick={() => {
-                  setFilterYear("");
+              {/* Year Selector */}
+              <select
+                value={filterYear}
+                onChange={(e) => {
+                  setFilterYear(e.target.value);
                   setFilterMonth("");
                   setFilterDay("");
-                  setSearch("");
                   setPage(1);
                 }}
-                className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors px-2 py-1.5 shrink-0"
+                className="bg-[#0d0d22] border border-white/10 rounded-xl px-3 py-2.5 text-gray-200 text-sm outline-none focus:border-indigo-500/60 transition-all cursor-pointer min-w-[120px]"
               >
-                Reset Filters
-              </button>
-            )}
+                <option value="">All Years</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+              </select>
+
+              {/* Month Selector */}
+              <select
+                value={filterMonth}
+                disabled={!filterYear}
+                onChange={(e) => {
+                  setFilterMonth(e.target.value);
+                  setFilterDay("");
+                  setPage(1);
+                }}
+                className="bg-[#0d0d22] border border-white/10 rounded-xl px-3 py-2.5 text-gray-200 text-sm outline-none focus:border-indigo-500/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-w-[130px]"
+              >
+                <option value="">All Months</option>
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+
+              {/* Day Selector */}
+              <select
+                value={filterDay}
+                disabled={!filterMonth}
+                onChange={(e) => {
+                  setFilterDay(e.target.value);
+                  setPage(1);
+                }}
+                className="bg-[#0d0d22] border border-white/10 rounded-xl px-3 py-2.5 text-gray-200 text-sm outline-none focus:border-indigo-500/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-w-[110px]"
+              >
+                <option value="">All Days</option>
+                {Array.from(
+                  { length: filterYear && filterMonth ? new Date(parseInt(filterYear), parseInt(filterMonth), 0).getDate() : 31 },
+                  (_, i) => {
+                    const dayVal = String(i + 1).padStart(2, "0");
+                    return (
+                      <option key={dayVal} value={dayVal}>
+                        {dayVal}
+                      </option>
+                    );
+                  }
+                )}
+              </select>
+            </div>
           </div>
 
           {/* Logs Table */}
           <div className="overflow-x-auto rounded-xl border border-white/8">
-            <table className="w-full text-left border-collapse min-w-[800px]">
+            <table className="w-full text-left border-collapse min-w-[950px]">
               <thead>
                 <tr className="bg-white/5 border-b border-white/8 text-[11px] text-indigo-300 uppercase tracking-wider font-semibold">
                   <th className="px-5 py-3">Visited At</th>
+                  <th className="px-5 py-3">Visitor / Instansi</th>
                   <th className="px-5 py-3">IP Address</th>
                   <th className="px-5 py-3">Location</th>
                   <th className="px-5 py-3">Organization / ISP</th>
@@ -390,110 +498,140 @@ export default function Tracker() {
               <tbody className="divide-y divide-white/4 text-sm text-gray-300">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-20">
+                    <td colSpan={7} className="text-center py-20">
                       <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mx-auto mb-2" />
                       <p className="text-gray-500 text-xs">Loading visitor logs...</p>
                     </td>
                   </tr>
                 ) : logs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-20 text-gray-500">
+                    <td colSpan={7} className="text-center py-20 text-gray-500">
                       No visitor logs found.
                     </td>
                   </tr>
                 ) : (
-                  logs.map((log) => (
-                    <tr key={log.id} className="hover:bg-white/2 transition-colors">
-                      {/* Visited At */}
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-white flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5 text-indigo-400" />
-                            {formatTimeAgo(log.visited_at)}
-                          </span>
-                          <span className="text-[10px] text-gray-500 mt-0.5">
-                            {new Date(log.visited_at).toLocaleString()}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* IP Address */}
-                      <td className="px-5 py-4 font-mono text-xs whitespace-nowrap">
-                        {log.ip}
-                      </td>
-
-                      {/* Location */}
-                      <td 
-                        className="p-0 cursor-pointer"
-                        onClick={() => {
-                          const url = getGoogleMapsUrl(log.city, log.region, log.country);
-                          if (url) {
-                            window.open(url, "_blank", "noopener,noreferrer");
-                          }
-                        }}
-                      >
-                        {getGoogleMapsUrl(log.city, log.region, log.country) ? (
-                          <a
-                            href={getGoogleMapsUrl(log.city, log.region, log.country)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()} // Prevent double-opening when clicking text directly
-                            className="group/loc relative z-10 flex flex-col px-5 py-4 hover:text-indigo-400 transition-colors w-full h-full"
-                            title="Open in Google Maps"
-                          >
-                            <span className="font-semibold text-white group-hover/loc:text-indigo-300 transition-colors flex items-center gap-1.5">
-                              {log.country}
-                              <MapPin className="w-3.5 h-3.5 text-gray-500 group-hover/loc:text-indigo-400 transition-colors" />
+                  logs.map((log) => {
+                    const identity = parseVisitorIdentity(log);
+                    return (
+                      <tr key={log.id} className="hover:bg-white/2 transition-colors">
+                        {/* Visited At */}
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-white flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-indigo-400" />
+                              {formatTimeAgo(log.visited_at)}
                             </span>
-                            <span className="text-xs text-gray-500 mt-0.5 group-hover/loc:text-gray-400 transition-colors">
-                              {log.city !== "Unknown" ? `${log.city}, ` : ""}
-                              {log.region !== "Unknown" ? log.region : ""}
+                            <span className="text-[10px] text-gray-500 mt-0.5">
+                              {new Date(log.visited_at).toLocaleString()}
                             </span>
-                          </a>
-                        ) : (
-                          <div className="flex flex-col px-5 py-4">
-                            <span className="font-semibold text-white">🌎 Global Visit</span>
-                            <span className="text-xs text-gray-500 mt-0.5">Unknown Location</span>
                           </div>
-                        )}
-                      </td>
+                        </td>
 
-                      {/* Org */}
-                      <td className="px-5 py-4 max-w-[200px] truncate text-xs text-gray-400 font-medium" title={log.org}>
-                        {log.org || "Direct ISP"}
-                      </td>
+                        {/* Visitor / Instansi Column */}
+                        <td className="px-5 py-4 min-w-[200px]">
+                          {identity.isIdentified ? (
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white text-[11px] font-bold shrink-0">
+                                  {identity.name?.charAt(0)?.toUpperCase() || "U"}
+                                </div>
+                                <span className="font-semibold text-white text-sm">
+                                  {identity.name}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 text-xs text-indigo-300 pl-7">
+                                <Building2 className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                                <span className="truncate max-w-[180px]" title={identity.instansi}>
+                                  {identity.instansi}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 text-gray-500 text-xs">
+                              <User className="w-3.5 h-3.5 opacity-50" />
+                              <span className="italic">Tamu Anonim</span>
+                            </div>
+                          )}
+                        </td>
 
-                      {/* Device */}
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <Monitor className="w-4 h-4 text-gray-500 shrink-0" />
-                          <span className="text-xs">{parseUserAgent(log.user_agent)}</span>
-                        </div>
-                      </td>
+                        {/* IP Address */}
+                        <td className="px-5 py-4 font-mono text-xs whitespace-nowrap">
+                          {log.ip}
+                        </td>
 
-                      {/* Referrer */}
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <Compass className="w-4 h-4 text-gray-500 shrink-0" />
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full border ${
-                              log.referrer.toLowerCase().includes("google")
-                                ? "bg-red-500/10 border-red-500/20 text-red-300"
-                                : log.referrer.toLowerCase().includes("github")
-                                ? "bg-purple-500/10 border-purple-500/20 text-purple-300"
-                                : log.referrer.toLowerCase().includes("linkedin")
-                                ? "bg-blue-500/10 border-blue-500/20 text-blue-300"
-                                : log.referrer === "Direct"
-                                ? "bg-gray-500/10 border-gray-500/20 text-gray-400"
-                                : "bg-indigo-500/10 border-indigo-500/20 text-indigo-300"
-                            }`}
-                          >
-                            {log.referrer}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                        {/* Location */}
+                        <td 
+                          className="p-0 cursor-pointer"
+                          onClick={() => {
+                            const url = getGoogleMapsUrl(log.city, log.region, log.country);
+                            if (url) {
+                              window.open(url, "_blank", "noopener,noreferrer");
+                            }
+                          }}
+                        >
+                          {getGoogleMapsUrl(log.city, log.region, log.country) ? (
+                            <a
+                              href={getGoogleMapsUrl(log.city, log.region, log.country)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()} // Prevent double-opening when clicking text directly
+                              className="group/loc relative z-10 flex flex-col px-5 py-4 hover:text-indigo-400 transition-colors w-full h-full"
+                              title="Open in Google Maps"
+                            >
+                              <span className="font-semibold text-white group-hover/loc:text-indigo-300 transition-colors flex items-center gap-1.5">
+                                {log.country}
+                                <MapPin className="w-3.5 h-3.5 text-gray-500 group-hover/loc:text-indigo-400 transition-colors" />
+                              </span>
+                              <span className="text-xs text-gray-500 mt-0.5 group-hover/loc:text-gray-400 transition-colors">
+                                {log.city !== "Unknown" ? `${log.city}, ` : ""}
+                                {log.region !== "Unknown" ? log.region : ""}
+                              </span>
+                            </a>
+                          ) : (
+                            <div className="flex flex-col px-5 py-4">
+                              <span className="font-semibold text-white">🌎 Global Visit</span>
+                              <span className="text-xs text-gray-500 mt-0.5">Unknown Location</span>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Org */}
+                        <td className="px-5 py-4 max-w-[180px] truncate text-xs text-gray-400 font-medium" title={log.org}>
+                          {log.org || "Direct ISP"}
+                        </td>
+
+                        {/* Device */}
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <Monitor className="w-4 h-4 text-gray-500 shrink-0" />
+                            <span className="text-xs">{parseUserAgent(log.user_agent)}</span>
+                          </div>
+                        </td>
+
+                        {/* Referrer */}
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <Compass className="w-4 h-4 text-gray-500 shrink-0" />
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded-full border ${
+                                log.referrer.toLowerCase().includes("google")
+                                  ? "bg-red-500/10 border-red-500/20 text-red-300"
+                                  : log.referrer.toLowerCase().includes("github")
+                                  ? "bg-purple-500/10 border-purple-500/20 text-purple-300"
+                                  : log.referrer.toLowerCase().includes("linkedin")
+                                  ? "bg-blue-500/10 border-blue-500/20 text-blue-300"
+                                  : log.referrer === "Direct"
+                                  ? "bg-gray-500/10 border-gray-500/20 text-gray-400"
+                                  : "bg-indigo-500/10 border-indigo-500/20 text-indigo-300"
+                              }`}
+                            >
+                              {log.referrer}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

@@ -15,6 +15,8 @@ import Login from "./Pages/Login";
 import Dashboard from "./Pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+import VisitorPromptModal from "./components/VisitorPromptModal";
+
 const Portofolio = lazy(() => import("./Pages/Portofolio"));
 const ContactPage = lazy(() => import("./Pages/Contact"));
 const ProjectDetails = lazy(() => import("./components/ProjectDetail"));
@@ -22,61 +24,84 @@ const WelcomeScreen = lazy(() => import("./Pages/WelcomeScreen"));
 const NotFoundPage = lazy(() => import("./Pages/404"));
 
 const LandingPage = ({ showWelcome, setShowWelcome }) => {
-  useEffect(() => {
-    const trackVisit = async () => {
-      // Only track once per browser session to prevent spamming
-      if (sessionStorage.getItem("tracked_session")) return;
+  const [showPrompt, setShowPrompt] = useState(false);
 
+  const saveAndTrackVisitor = async (visitorInfo = null) => {
+    try {
+      let geoData = {};
       try {
         const geoRes = await fetch("https://ipapi.co/json/");
-        const geoData = await geoRes.json();
-
-        const logData = {
-          ip: geoData.ip || "Unknown",
-          city: geoData.city || "Unknown",
-          region: geoData.region || "Unknown",
-          country: geoData.country_name || "Unknown",
-          org: geoData.org || "Unknown",
-          user_agent: navigator.userAgent,
-          referrer: document.referrer || "Direct",
-          path: window.location.pathname
-        };
-
-        await supabase.from("visitors").insert(logData);
-        sessionStorage.setItem("tracked_session", "true");
-      } catch (err) {
-        console.error("Tracking error:", err);
-        try {
-          const logData = {
-            ip: "Unknown",
-            city: "Unknown",
-            region: "Unknown",
-            country: "Unknown",
-            org: "Unknown",
-            user_agent: navigator.userAgent,
-            referrer: document.referrer || "Direct",
-            path: window.location.pathname
-          };
-          await supabase.from("visitors").insert(logData);
-          sessionStorage.setItem("tracked_session", "true");
-        } catch (e) {
-          console.error("Fallback tracking error:", e);
-        }
+        geoData = await geoRes.json();
+      } catch (e) {
+        console.warn("Geo lookup fallback", e);
       }
-    };
 
-    trackVisit();
-  }, []);
+      const name = visitorInfo?.name || "Tamu Anonim";
+      const instansi = visitorInfo?.instansi || "Pribadi / Umum";
+      const hasIdentity = Boolean(visitorInfo?.name);
+
+      const logData = {
+        ip: geoData.ip || "Unknown",
+        city: geoData.city || "Unknown",
+        region: geoData.region || "Unknown",
+        country: geoData.country_name || "Unknown",
+        org: hasIdentity ? `[${instansi}] ${name}` : (geoData.org || "Direct ISP"),
+        user_agent: hasIdentity
+          ? `[Visitor: ${name} | ${instansi}] ${navigator.userAgent}`
+          : navigator.userAgent,
+        referrer: hasIdentity
+          ? `Visitor: ${name} (${instansi})`
+          : (document.referrer || "Direct"),
+        path: window.location.pathname,
+      };
+
+      await supabase.from("visitors").insert(logData);
+      sessionStorage.setItem("tracked_session", "true");
+    } catch (err) {
+      console.error("Tracking error:", err);
+    }
+  };
+
+  const handleWelcomeComplete = () => {
+    setShowWelcome(false);
+    const alreadyHandled = sessionStorage.getItem("visitor_identity_handled");
+    if (!alreadyHandled) {
+      setShowPrompt(true);
+    } else if (!sessionStorage.getItem("tracked_session")) {
+      const savedInfo = JSON.parse(sessionStorage.getItem("visitor_info") || "null");
+      saveAndTrackVisitor(savedInfo);
+    }
+  };
+
+  const handlePromptSubmit = async (data) => {
+    sessionStorage.setItem("visitor_identity_handled", "true");
+    sessionStorage.setItem("visitor_info", JSON.stringify(data));
+    localStorage.setItem("visitor_info", JSON.stringify(data));
+    setShowPrompt(false);
+    await saveAndTrackVisitor(data);
+  };
+
+  const handlePromptSkip = async () => {
+    sessionStorage.setItem("visitor_identity_handled", "true");
+    setShowPrompt(false);
+    await saveAndTrackVisitor(null);
+  };
 
   return (
     <>
       <AnimatePresence mode="wait">
         {showWelcome && (
           <Suspense fallback={null}>
-            <WelcomeScreen onLoadingComplete={() => setShowWelcome(false)} />
+            <WelcomeScreen onLoadingComplete={handleWelcomeComplete} />
           </Suspense>
         )}
       </AnimatePresence>
+
+      <VisitorPromptModal
+        isOpen={showPrompt}
+        onSubmit={handlePromptSubmit}
+        onSkip={handlePromptSkip}
+      />
 
       {!showWelcome && (
         <>
