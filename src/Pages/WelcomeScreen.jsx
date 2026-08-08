@@ -47,6 +47,8 @@ const IconButton = ({ Icon }) => (
 
 const WelcomeScreen = ({ onLoadingComplete }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const onCompleteRef = React.useRef(onLoadingComplete);
+  onCompleteRef.current = onLoadingComplete;
 
   useEffect(() => {
     AOS.init({
@@ -58,12 +60,12 @@ const WelcomeScreen = ({ onLoadingComplete }) => {
     const timer = setTimeout(() => {
       setIsLoading(false);
       setTimeout(() => {
-        onLoadingComplete?.();
-      }, 1000);
-    }, 3400);
+        onCompleteRef.current?.();
+      }, 800);
+    }, 3200);
     
     return () => clearTimeout(timer);
-  }, [onLoadingComplete]);
+  }, []);
 
   const containerVariants = {
     exit: {
