@@ -24,12 +24,14 @@ export default function VisitorPromptModal({ isOpen, onSubmit, onSkip }) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-x-hidden overflow-y-auto">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-x-hidden overflow-y-auto"
+        >
           {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <div
             onClick={handleSkip}
             className="fixed inset-0 bg-[#030014]/80 backdrop-blur-md"
           />

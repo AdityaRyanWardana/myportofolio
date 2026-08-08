@@ -73,6 +73,18 @@ const LandingPage = ({ showWelcome, setShowWelcome }) => {
     }
   };
 
+  useEffect(() => {
+    if (!showWelcome) {
+      const alreadyHandled = sessionStorage.getItem("visitor_identity_handled");
+      if (!alreadyHandled) {
+        setShowPrompt(true);
+      } else if (!sessionStorage.getItem("tracked_session")) {
+        const savedInfo = JSON.parse(sessionStorage.getItem("visitor_info") || "null");
+        saveAndTrackVisitor(savedInfo);
+      }
+    }
+  }, [showWelcome]);
+
   const handlePromptSubmit = async (data) => {
     sessionStorage.setItem("visitor_identity_handled", "true");
     sessionStorage.setItem("visitor_info", JSON.stringify(data));
