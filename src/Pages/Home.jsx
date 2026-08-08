@@ -96,6 +96,19 @@ const Home = () => {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
   const [profileData, setProfileData] = useState(null)
+  const [visitor, setVisitor] = useState(null)
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("visitor_info") || localStorage.getItem("visitor_info");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.name) setVisitor(parsed);
+      }
+    } catch (e) {
+      console.warn("Visitor info parse error:", e);
+    }
+  }, []);
 
   const WORDS = t("typingWords")
   const titleLine1 = profileData?.hero_title_1 || t("heroTitle1")
