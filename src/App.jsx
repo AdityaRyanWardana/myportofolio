@@ -89,13 +89,11 @@ const LandingPage = ({ showWelcome, setShowWelcome }) => {
 
   return (
     <>
-      <AnimatePresence mode="wait">
-        {showWelcome && (
-          <Suspense fallback={null}>
-            <WelcomeScreen onLoadingComplete={handleWelcomeComplete} />
-          </Suspense>
-        )}
-      </AnimatePresence>
+      {showWelcome && (
+        <Suspense fallback={null}>
+          <WelcomeScreen onLoadingComplete={handleWelcomeComplete} />
+        </Suspense>
+      )}
 
       <VisitorPromptModal
         isOpen={showPrompt}
@@ -103,19 +101,14 @@ const LandingPage = ({ showWelcome, setShowWelcome }) => {
         onSkip={handlePromptSkip}
       />
 
-      {!showWelcome && (
-        <>
-          <Navbar />
-      
-          <Home />
-          <About />
-          <Suspense fallback={<div className="h-20" />}>
-            <Portofolio />
-            <ContactPage />
-          </Suspense>
-          <Footer />
-        </>
-      )}
+      <Navbar />
+      <Home />
+      <About />
+      <Suspense fallback={<div className="h-20" />}>
+        <Portofolio />
+        <ContactPage />
+      </Suspense>
+      <Footer />
     </>
   );
 };
