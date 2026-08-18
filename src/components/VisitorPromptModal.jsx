@@ -57,7 +57,7 @@ export default function VisitorPromptModal({ isOpen, onSubmit }) {
               <div className="text-center space-y-2 mb-6">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium">
                   <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>Buku Tamu Kunjungan</span>
+                  <span>Portal Pengunjung</span>
                 </div>
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent">
                   Kenalan Dulu Yuk! 👋
@@ -113,7 +113,7 @@ export default function VisitorPromptModal({ isOpen, onSubmit }) {
                 {/* Privacy Notice */}
                 <div className="flex items-center gap-2 text-[11px] text-gray-400 pt-1">
                   <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Identitas Anda dicatat untuk statistik buku tamu kunjungan.</span>
+                  <span>Identitas Anda dicatat untuk statistik kunjungan portofolio.</span>
                 </div>
 
                 {/* Action Button */}
