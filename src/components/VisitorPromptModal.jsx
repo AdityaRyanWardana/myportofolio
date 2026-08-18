@@ -2,23 +2,21 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Building2, Sparkles, ArrowRight, ShieldCheck, UserCheck } from "lucide-react";
 
-export default function VisitorPromptModal({ isOpen, onSubmit, onSkip }) {
+export default function VisitorPromptModal({ isOpen, onSubmit }) {
   const [name, setName] = useState("");
   const [instansi, setInstansi] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isFormValid = name.trim().length > 0 && instansi.trim().length > 0;
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!isFormValid || isSubmitting) return;
     setIsSubmitting(true);
     onSubmit({
       name: name.trim(),
-      instansi: instansi.trim() || "Pribadi / Umum",
+      instansi: instansi.trim(),
     });
-  };
-
-  const handleSkip = () => {
-    onSkip();
   };
 
   return (
@@ -30,11 +28,8 @@ export default function VisitorPromptModal({ isOpen, onSubmit, onSkip }) {
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-x-hidden overflow-y-auto"
         >
-          {/* Backdrop */}
-          <div
-            onClick={handleSkip}
-            className="fixed inset-0 bg-[#030014]/80 backdrop-blur-md"
-          />
+          {/* Backdrop (non-dismissible) */}
+          <div className="fixed inset-0 bg-[#030014]/85 backdrop-blur-md" />
 
           {/* Modal Card */}
           <motion.div
@@ -62,13 +57,13 @@ export default function VisitorPromptModal({ isOpen, onSubmit, onSkip }) {
               <div className="text-center space-y-2 mb-6">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium">
                   <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>Selamat Datang di Portofolio Saya</span>
+                  <span>Buku Tamu Kunjungan</span>
                 </div>
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent">
                   Kenalan Dulu Yuk! 👋
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                  Silakan masukkan nama dan instansi Anda agar kami tahu siapa yang berkunjung.
+                  Silakan perkenalkan nama dan instansi Anda untuk melanjutkan ke portofolio.
                 </p>
               </div>
 
@@ -89,7 +84,7 @@ export default function VisitorPromptModal({ isOpen, onSubmit, onSkip }) {
                       autoFocus
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Contoh: Aditya / Sarah"
+                      placeholder="Contoh: Aditya Ryan / Sarah"
                       className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                     />
                   </div>
@@ -98,7 +93,7 @@ export default function VisitorPromptModal({ isOpen, onSubmit, onSkip }) {
                 {/* Input Instansi */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-indigo-300">
-                    Instansi / Perusahaan / Kampus <span className="text-gray-500 text-[10px] lowercase">(opsional)</span>
+                    Instansi / Perusahaan / Kampus <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
@@ -106,9 +101,10 @@ export default function VisitorPromptModal({ isOpen, onSubmit, onSkip }) {
                     </div>
                     <input
                       type="text"
+                      required
                       value={instansi}
                       onChange={(e) => setInstansi(e.target.value)}
-                      placeholder="Contoh: PT Telkom / Universitas Indonesia / Pribadi"
+                      placeholder="Contoh: PT Telkom / Univ Indonesia / Pribadi"
                       className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                     />
                   </div>
@@ -117,26 +113,18 @@ export default function VisitorPromptModal({ isOpen, onSubmit, onSkip }) {
                 {/* Privacy Notice */}
                 <div className="flex items-center gap-2 text-[11px] text-gray-400 pt-1">
                   <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Identitas dicatat untuk statistik kunjungan portofolio.</span>
+                  <span>Identitas Anda dicatat untuk statistik buku tamu kunjungan.</span>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="pt-2 space-y-2.5">
+                {/* Action Button */}
+                <div className="pt-2">
                   <button
                     type="submit"
-                    disabled={!name.trim() || isSubmitting}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-gradient-to-r from-[#6366f1] via-[#8b5cf6] to-[#a855f7] text-white font-medium text-sm shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    disabled={!isFormValid || isSubmitting}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-gradient-to-r from-[#6366f1] via-[#8b5cf6] to-[#a855f7] text-white font-medium text-sm shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none cursor-pointer"
                   >
-                    <span>Lanjutkan ke Portofolio</span>
+                    <span>{isSubmitting ? "Menyimpan..." : "Lanjutkan ke Portofolio"}</span>
                     <ArrowRight className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleSkip}
-                    className="w-full py-2.5 text-xs text-gray-400 hover:text-gray-200 transition-colors font-medium cursor-pointer"
-                  >
-                    Lewati sebagai Tamu Anonim
                   </button>
                 </div>
               </form>

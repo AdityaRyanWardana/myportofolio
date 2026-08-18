@@ -27,6 +27,19 @@ const NotFoundPage = lazy(() => import("./Pages/404"));
 const LandingPage = ({ showWelcome, setShowWelcome }) => {
   const [showPrompt, setShowPrompt] = useState(false);
 
+  const getSavedVisitor = () => {
+    try {
+      const raw = sessionStorage.getItem("visitor_info") || localStorage.getItem("visitor_info");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.name && parsed?.instansi) return parsed;
+      }
+    } catch (e) {
+      console.warn("Visitor parse error:", e);
+    }
+    return null;
+  };
+
   const saveAndTrackVisitor = async (visitorInfo = null) => {
     try {
       let geoData = {};
@@ -37,8 +50,8 @@ const LandingPage = ({ showWelcome, setShowWelcome }) => {
         console.warn("Geo lookup fallback", e);
       }
 
-      const name = visitorInfo?.name || "Tamu Anonim";
-      const instansi = visitorInfo?.instansi || "Pribadi / Umum";
+      const name = visitorInfo?.name || "Tamu";
+      const instansi = visitorInfo?.instansi || "Umum";
       const hasIdentity = Boolean(visitorInfo?.name);
 
       const logData = {
@@ -65,37 +78,29 @@ const LandingPage = ({ showWelcome, setShowWelcome }) => {
 
   const handleWelcomeComplete = () => {
     setShowWelcome(false);
-    const hasSeenPrompt = sessionStorage.getItem("visitor_prompt_seen");
-    if (!hasSeenPrompt) {
+    const savedInfo = getSavedVisitor();
+    if (!savedInfo) {
       setShowPrompt(true);
     } else if (!sessionStorage.getItem("tracked_session")) {
-      const savedInfo = JSON.parse(sessionStorage.getItem("visitor_info") || localStorage.getItem("visitor_info") || "null");
       saveAndTrackVisitor(savedInfo);
     }
   };
 
   useEffect(() => {
     if (!showWelcome) {
-      const hasSeenPrompt = sessionStorage.getItem("visitor_prompt_seen");
-      if (!hasSeenPrompt) {
+      const savedInfo = getSavedVisitor();
+      if (!savedInfo) {
         setShowPrompt(true);
       }
     }
   }, [showWelcome]);
 
   const handlePromptSubmit = async (data) => {
-    sessionStorage.setItem("visitor_prompt_seen", "true");
     sessionStorage.setItem("visitor_info", JSON.stringify(data));
     localStorage.setItem("visitor_info", JSON.stringify(data));
     window.dispatchEvent(new Event("visitor_info_updated"));
     setShowPrompt(false);
     await saveAndTrackVisitor(data);
-  };
-
-  const handlePromptSkip = async () => {
-    sessionStorage.setItem("visitor_prompt_seen", "true");
-    setShowPrompt(false);
-    await saveAndTrackVisitor(null);
   };
 
   return (
@@ -111,7 +116,6 @@ const LandingPage = ({ showWelcome, setShowWelcome }) => {
       <VisitorPromptModal
         isOpen={showPrompt}
         onSubmit={handlePromptSubmit}
-        onSkip={handlePromptSkip}
       />
 
       {!showWelcome && (
