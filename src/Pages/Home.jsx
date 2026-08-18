@@ -101,7 +101,7 @@ const Home = () => {
   useEffect(() => {
     const loadVisitor = () => {
       try {
-        const raw = sessionStorage.getItem("visitor_info") || localStorage.getItem("visitor_info");
+        const raw = sessionStorage.getItem("visitor_info");
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed?.name) setVisitor(parsed);

@@ -29,7 +29,7 @@ const LandingPage = ({ showWelcome, setShowWelcome }) => {
 
   const getSavedVisitor = () => {
     try {
-      const raw = sessionStorage.getItem("visitor_info") || localStorage.getItem("visitor_info");
+      const raw = sessionStorage.getItem("visitor_info");
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed?.name && parsed?.instansi) return parsed;
@@ -97,7 +97,6 @@ const LandingPage = ({ showWelcome, setShowWelcome }) => {
 
   const handlePromptSubmit = async (data) => {
     sessionStorage.setItem("visitor_info", JSON.stringify(data));
-    localStorage.setItem("visitor_info", JSON.stringify(data));
     window.dispatchEvent(new Event("visitor_info_updated"));
     setShowPrompt(false);
     await saveAndTrackVisitor(data);
